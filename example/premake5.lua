@@ -17,7 +17,7 @@
 
 baseName = path.getbasename(os.getcwd());
 
-project (workspaceName)
+project (baseName)
     kind "ConsoleApp"
     location "./"
     targetdir "../bin/%{cfg.buildcfg}"
@@ -55,5 +55,5 @@ project (workspaceName)
     includedirs { "include" }
     
     link_raylib()
-    link_to("staticLib")
+    link_to("rlText")
 -- To link to a lib use link_to("LIB_FOLDER_NAME")

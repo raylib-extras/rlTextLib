@@ -164,8 +164,8 @@ workspace (workspaceName)
 
     targetdir "bin/%{cfg.buildcfg}/"
 
-    if(os.isdir("game")) then
-        startproject(workspaceName)
+    if(os.isdir("example")) then
+        startproject(example)
     end
 
 cdialect "C17"

@@ -26,7 +26,8 @@ Use this as a starting point or replace it with your code.
 #include "raymath.h"
 
 #include "game.h"   // an external header in this project
-#include "lib.h"	// an external header in the static lib project
+#include "rlText.h"	// an external header in the static lib project
+
 
 
 void GameInit()
@@ -55,8 +56,19 @@ void GameDraw()
     BeginDrawing();
     ClearBackground(DARKGRAY);
 
-    DrawText("Hello Raylib!", 10, 10, 20, GetTextColor());
+    double newStart = GetTime();
+    rltDrawText("Hello Raylib I AM NEW DRAWING!!!!", 20, Vector2{10,10}, BLACK);
+    double newDelta = GetTime() - newStart;
+    rltDrawText(TextFormat("new time %f", newDelta * 1000.0f), 20, Vector2{10,30}, BLACK);
 
+    double oldStart = GetTime();
+    DrawText("Hello Raylib I AM OLD DRAWING!!!!", 10, 60, 20, BLACK);
+    double oldDelta = GetTime() - oldStart;
+
+    rltDrawText(TextFormat("old time %f", oldDelta * 1000.0f), 20, Vector2{ 10,80 }, BLACK);
+
+
+    rltDrawText("Text is text\nI am more Text\nBruh!", 20, Vector2{ 10,100 }, BLACK);
     EndDrawing();
 }
 
