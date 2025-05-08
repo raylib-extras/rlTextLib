@@ -24,48 +24,61 @@ Use this as a starting point or replace it with your code.
 #pragma once
 
 #include "raylib.h"
+#include "raymath.h"
 
 #include <set>
 #include <vector>
 #include <string>
 
-struct rltGlyphInfo 
+struct rltGlyphInfo
 {
-    int         Value = 0;
-    Vector2     Offset = { 0,0 };
-    float       NextCharacterAdvance = 0;
-    Rectangle   SourceRect = { 0,0,0,0 };
+	int         Value = 0;
+	Vector2     Offset = { 0,0 };
+	float       NextCharacterAdvance = 0;
+	Rectangle   SourceRect = { 0,0,0,0 };
+	Vector2		DestSize = { 0,0 };
 };
 
 struct rltGlyphRange
 {
-    int Start = 0;
-    std::vector<rltGlyphInfo> Glyphs;
+	int Start = 0;
+	std::vector<rltGlyphInfo> Glyphs;
 };
 
 struct rltFont
 {
-    float BaseSize;           // Base size (default chars height)
-    float GlyphPadding;       // Padding around the glyph characters
-    float DefaultSpacing = 0;
-    float DefaultNewlineOffset = 0;
-    float Accent = 0;
-    std::vector<rltGlyphRange> Ranges;
+	float BaseSize;
+	float GlyphPadding = 0;
+	float DefaultSpacing = 0;
+	float DefaultNewlineOffset = 0;
+	float Accent = 0;
+	std::vector<rltGlyphRange> Ranges;
 
-    Texture2D texture;          // Texture atlas containing the glyphs
+	rltGlyphInfo InvalidGlyph;
+
+	Texture2D texture;
 };
 
 const rltFont& rltGetDefaultFont();
 
-void rltGetStandardGlyphRange(std::set<int>& glyphRange);
-void rltAddGlyphRange(int start, int end, std::set<int>& glyphRange);
-void rltAddGlyphRangeFromString(std::string_view text, std::set<int>& glyphRange);
+using rltGlyphSet = std::set<int>;
 
-rltFont rltLoadFontTTF(std::string_view filePath,  float fontSize, const std::set<int>* glyphRange = nullptr, float* defaultSpacing = nullptr);
-rltFont rltLoadFontTTFMemory(const void* data, size_t dataSize, float fontSize, const std::set<int>* glyphRange = nullptr, float* defaultSpacing = nullptr);
+void rltGetStandardGlyphSet(rltGlyphSet& glyphSet);
+void rltAddRangeToGlyphSet(int start, int end, rltGlyphSet& glyphSet);
+void rltAddGlyphSetFromString(std::string_view text, rltGlyphSet& glyphSet);
+
+rltFont rltLoadFontTTF(std::string_view filePath, float fontSize, const rltGlyphSet* glyphSet = nullptr, float* defaultSpacing = nullptr);
+rltFont rltLoadFontTTFMemory(const void* data, size_t dataSize, float fontSize, const rltGlyphSet* glyphSet = nullptr, float* defaultSpacing = nullptr);
 
 void rltUnloadFont(rltFont* font);
+
+bool rltFontHasCodepoint(rltFont* font, int codepoint);
+bool rltFontHasAllGlyphsInString(rltFont* font, std::string_view text);
+
+bool rltAddGlpyhToFont(rltFont* font, int codepoint, Image& glpyhImage, const Vector2& offeset = Vector2Zeros, float advance = -1);
 
 void rltDrawText(std::string_view text, float size, const Vector2& position, Color tint, const rltFont* font = nullptr);
 
 float rltDrawTextWrapped(std::string_view text, float size, const Vector2& position, float width, Color tint, const rltFont* font = nullptr);
+
+Vector2 rltMeasureText(std::string_view text, float size, const rltFont* font = nullptr);
