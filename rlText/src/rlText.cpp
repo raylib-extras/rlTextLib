@@ -26,6 +26,14 @@ Use this as a starting point or replace it with your code.
 
 #include "raymath.h"
 
+#include <map>
+
+#include "external/stb_rect_pack.h"     // Required for: ttf/bdf font rectangles packaging
+
+#define STBTT_STATIC
+#define STB_TRUETYPE_IMPLEMENTATION
+#include "external/stb_truetype.h"      // Required for: ttf font data reading
+
 static rltFont DefaultFont;
 
 void LoadDefaultFont()
@@ -173,8 +181,6 @@ void LoadDefaultFont()
     }
 
     UnloadImage(imFont);
-
-   // DefaultFont.BaseSize = range.Glyphs[0].SourceRect.height;
 }
 
 const rltFont& rltGetDefaultFont()
@@ -185,37 +191,230 @@ const rltFont& rltGetDefaultFont()
     return DefaultFont;
 }
 
-void rltGetStandardGlyphRange(const std::vector<int>& glyphRange)
+void rltGetStandardGlyphRange(std::set<int>& glyphRange)
 {
-
+    for (int i = 32; i < 128; i++)
+        glyphRange.insert(i);
 }
 
-void rltAddGlyphRange(int start, int end, const std::vector<int>& glyphRange)
+void rltAddGlyphRange(int start, int end, std::set<int>& glyphRange)
 {
-
+    for (int i = start; i <= end; i++)
+        glyphRange.insert(i);
 }
 
-void rltAddGlyphRangeFromString(std::string_view text, const std::vector<int>& glyphRange)
+void rltAddGlyphRangeFromString(std::string_view text, std::set<int>& glyphRange)
 {
-
+    for (size_t i = 0; i < text.size();)
+    {
+        int codepointByteCount = 0;
+        int codepoint = GetCodepointNext(text.data() + i, &codepointByteCount);
+        glyphRange.insert(codepoint);
+        i += codepointByteCount;
+    }
 }
 
-rltFont rltLoadFontTTF(std::string_view filePath, const std::vector<int>* glyphRange)
+rltFont rltLoadFontTTF(std::string_view filePath, float fontSize, const std::set<int>* glyphRange, float* defaultSpacing)
 {
-    rltFont font;
+    int dataSize = 0;
+    unsigned char* fileData = LoadFileData(filePath.data(), &dataSize);
+
+    auto font = rltLoadFontTTFMemory(fileData, dataSize, fontSize, glyphRange, defaultSpacing);
+
+    UnloadFileData(fileData);
 
     return font;
 }
 
-rltFont rltLoadFontTTFMemory(const void* data, size_t size)
+rltFont rltLoadFontTTFMemory(const void* data, size_t dataSize, float fontSize, const std::set<int>* glyphRange, float* defaultSpacing)
 {
     rltFont font;
+
+    font.BaseSize = fontSize;
+    font.DefaultSpacing = fontSize / 10.0f;
+    if (defaultSpacing)
+        font.DefaultSpacing = *defaultSpacing;
+
+    std::set<int> defaultRange;
+    const std::set<int>* rangeToUse = glyphRange;
+    if (!rangeToUse)
+    {
+        rltGetStandardGlyphRange(defaultRange);
+        rangeToUse = &defaultRange;
+    }
+    stbtt_fontinfo fontInfo = { 0 };
+    if (!stbtt_InitFont(&fontInfo, (unsigned char*)data, 0))
+        return font;
+
+    float rasterScale = 1.0f;
+    // if we are auto scaling for high DPI, load the font at the scaled size, so that the pixel map is the right size
+    if (IsWindowState(FLAG_WINDOW_HIGHDPI))
+        rasterScale = GetWindowScaleDPI().y;
+
+    float effectivefontSize = fontSize * rasterScale;
+
+    float scaleFactor = stbtt_ScaleForPixelHeight(&fontInfo, (float)effectivefontSize);
+
+    // Calculate font basic metrics
+    // NOTE: ascent is equivalent to font baseline
+    int ascent, descent, lineGap;
+    stbtt_GetFontVMetrics(&fontInfo, &ascent, &descent, &lineGap);
+
+    font.Accent = (ascent*scaleFactor) / rasterScale;
+
+    int lastCodePoint = -1000;
+
+    rltGlyphRange* currentRange = nullptr;
+
+    std::map<int, Image> glyphImages;
+
+    for (auto& codepoint : *rangeToUse)
+    {
+        int index = stbtt_FindGlyphIndex(&fontInfo, codepoint);
+
+        if (index <= 0)
+            continue;
+
+        if (!currentRange || codepoint != lastCodePoint + 1)
+        {
+            currentRange = &font.Ranges.emplace_back();
+            currentRange->Start = codepoint;
+        }
+        lastCodePoint = codepoint;
+        auto& glyphInfo = currentRange->Glyphs.emplace_back();
+        glyphInfo.Value = codepoint;
+  
+        Image glyphImage = { 0 };
+
+        int offsetX = 0;
+        int offsetY = 0;
+        glyphImage.data = stbtt_GetCodepointBitmap(&fontInfo,
+            scaleFactor, 
+            scaleFactor, 
+            codepoint, 
+            &glyphImage.width, 
+            &glyphImage.height, 
+            &offsetX,
+            &offsetY);
+
+        int advanceX = 0;
+        stbtt_GetCodepointHMetrics(&fontInfo, codepoint, &advanceX, nullptr);
+        glyphInfo.NextCharacterAdvance = (advanceX * scaleFactor) / rasterScale; 
+
+        // backplot the offsets into world space
+        glyphInfo.Offset.x = offsetX / rasterScale;
+        offsetY += int(ascent * scaleFactor);
+        glyphInfo.Offset.y = offsetY / rasterScale;
+
+        glyphImage.mipmaps = 1;
+        glyphImage.format = PIXELFORMAT_UNCOMPRESSED_GRAYSCALE;
+
+        // we will composite this later
+        glyphImages.insert_or_assign(codepoint, glyphImage);
+    }
+
+    Image fontAtlas = { 0 };
+
+    std::map<int, Rectangle> glyphRects;
+
+    // Calculate image size based on total glyph width and glyph row count
+    int totalWidth = 0;
+    int maxGlyphWidth = 0;
+
+    static constexpr int GlyphPadding = 4;
+
+    for (auto& codepoint : *rangeToUse)
+    {
+        if (glyphImages.find(codepoint) == glyphImages.end())
+            continue;
+
+        if (glyphImages[codepoint].width > maxGlyphWidth)
+            maxGlyphWidth = glyphImages[codepoint].width;
+
+        totalWidth += glyphImages[codepoint].width + (2 * GlyphPadding);
+    }
+
+    int paddedFontSize = int(effectivefontSize + 2 * GlyphPadding);
+    // No need for a so-conservative atlas generation
+    float totalArea = totalWidth * paddedFontSize * 1.2f;
+    float imageMinSize = sqrtf(totalArea);
+    int imageSize = (int)powf(2, ceilf(logf(imageMinSize) / logf(2)));
+
+    if (totalArea < ((imageSize * imageSize) / 2))
+    {
+        fontAtlas.width = imageSize;    // Atlas bitmap width
+        fontAtlas.height = imageSize / 2; // Atlas bitmap height
+    }
+    else
+    {
+        fontAtlas.width = imageSize;   // Atlas bitmap width
+        fontAtlas.height = imageSize;  // Atlas bitmap height
+    }
+
+    fontAtlas.data = (unsigned char*)MemAlloc(fontAtlas.width * fontAtlas.height * 2);   // Create a bitmap to store characters (8 bpp)
+    fontAtlas.format = PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA;
+    fontAtlas.mipmaps = 1;
+
+    //fill it with white
+    memset(fontAtlas.data, 0xFFFFFFFF, fontAtlas.width * fontAtlas.height * 2);
+
+
+    int offsetX = GlyphPadding;
+    int offsetY = GlyphPadding;
+
+    // NOTE: Using simple packaging, one char after another
+    for (auto& range : font.Ranges)
+    {
+        for (auto& glyphInfo : range.Glyphs)
+        {
+            auto& image = glyphImages[glyphInfo.Value];
+
+            // Check remaining space for glyph
+            if (offsetX >= (fontAtlas.width - image.width - 2 * GlyphPadding))
+            {
+                offsetX = GlyphPadding;
+
+                // NOTE: Be careful on offsetY for SDF fonts, by default SDF
+                // use an internal padding of 4 pixels, it means char rectangle
+                // height is bigger than fontSize, it could be up to (fontSize + 8)
+                offsetY += int(effectivefontSize + 2 * GlyphPadding);
+            }
+
+            glyphInfo.SourceRect = {float(offsetX), float(offsetY), float(image.width), float(image.height)};
+
+            // copy the image to just the alpha
+            for (size_t y = 0; y < image.height; y++)
+            {
+                for (size_t x = 0; x < image.width; x++)
+                {
+                    size_t sourceIndex = y * image.width + x;
+                    size_t destIndex = (offsetY + y) * fontAtlas.width + (offsetX + x);
+
+                    unsigned char* sourcePixel = ((unsigned char*)image.data) + sourceIndex;
+                    unsigned char* destPixel = ((unsigned char*)fontAtlas.data) + (destIndex*2);
+
+                    destPixel++;
+                    *destPixel = *sourcePixel;
+                }
+            }
+
+            UnloadImage(image);
+            image.data = nullptr;
+
+            // Move atlas position X for next character drawing
+            offsetX += int(glyphInfo.SourceRect.width + (2 * GlyphPadding));
+        }
+    }
+
+    font.texture = LoadTextureFromImage(fontAtlas);
 
     return font;
 }
 
 void rltUnloadFont(rltFont* font)
 {
+    if (font == &DefaultFont)
+        return;
 
 }
 
@@ -267,11 +466,67 @@ void rltDrawText(std::string_view text, float size, const Vector2& position, Col
 
             DrawTexturePro(fontToUse->texture, glyph->SourceRect, destRect, Vector2Zeros, 0, tint);
             currentPos.x += destRect.width;
-            currentPos.x += fontToUse->DefaultSpacing * scale;
         }
         else
         {
             DrawRectangleRec(Rectangle{ currentPos.x, currentPos.y, size, size }, tint);
         }
+        currentPos.x += fontToUse->DefaultSpacing * scale;
     }
+}
+
+float rltDrawTextWrapped(std::string_view text, float size, const Vector2& position, float width, Color tint, const rltFont* font)
+{
+    const rltFont* fontToUse = &rltGetDefaultFont();
+    if (font)
+        fontToUse = font;
+
+    Vector2 currentPos = position;
+
+    float scale = size / fontToUse->BaseSize;
+
+    for (size_t i = 0; i < text.size();)
+    {
+        int codepointByteCount = 0;
+        int codepoint = GetCodepointNext(text.data() + i, &codepointByteCount);
+        i += codepointByteCount;
+
+        if (codepoint < 32)
+        {
+            // control character
+            if (codepoint == 10)
+            {
+                currentPos.x = position.x;
+                currentPos.y += fontToUse->DefaultNewlineOffset * scale;
+            }
+            continue;
+        }
+
+        const auto* glyph = rtlGetFontGlyph(fontToUse, codepoint);
+
+        float glyphWidth = size;
+        if (glyph)
+            glyphWidth = glyph->SourceRect.width * scale;
+
+        if (currentPos.x + glyphWidth + fontToUse->DefaultSpacing * scale > width)
+        {
+            currentPos.x = position.x;
+            currentPos.y += fontToUse->DefaultNewlineOffset * scale;
+        }
+
+        if (glyph)
+        {
+            Rectangle destRect = { currentPos.x, currentPos.y, glyphWidth , glyph->SourceRect.height * scale };
+
+            DrawTexturePro(fontToUse->texture, glyph->SourceRect, destRect, Vector2Zeros, 0, tint);
+            currentPos.x += destRect.width;
+        }
+        else
+        {
+            DrawRectangleRec(Rectangle{ currentPos.x, currentPos.y, glyphWidth, size }, tint);
+        }
+        currentPos.x += fontToUse->DefaultSpacing * scale;
+    }
+
+    return currentPos.y + fontToUse->DefaultNewlineOffset * scale;
 }

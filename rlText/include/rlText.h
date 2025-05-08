@@ -25,6 +25,7 @@ Use this as a starting point or replace it with your code.
 
 #include "raylib.h"
 
+#include <set>
 #include <vector>
 #include <string>
 
@@ -48,6 +49,7 @@ struct rltFont
     float GlyphPadding;       // Padding around the glyph characters
     float DefaultSpacing = 0;
     float DefaultNewlineOffset = 0;
+    float Accent = 0;
     std::vector<rltGlyphRange> Ranges;
 
     Texture2D texture;          // Texture atlas containing the glyphs
@@ -55,13 +57,15 @@ struct rltFont
 
 const rltFont& rltGetDefaultFont();
 
-void rltGetStandardGlyphRange(const std::vector<int>& glyphRange);
-void rltAddGlyphRange(int start, int end, const std::vector<int>& glyphRange);
-void rltAddGlyphRangeFromString(std::string_view text, const std::vector<int>& glyphRange);
+void rltGetStandardGlyphRange(std::set<int>& glyphRange);
+void rltAddGlyphRange(int start, int end, std::set<int>& glyphRange);
+void rltAddGlyphRangeFromString(std::string_view text, std::set<int>& glyphRange);
 
-rltFont rltLoadFontTTF(std::string_view filePath, const std::vector<int>* glyphRange = nullptr);
-rltFont rltLoadFontTTFMemory(const void* data, size_t size);
+rltFont rltLoadFontTTF(std::string_view filePath,  float fontSize, const std::set<int>* glyphRange = nullptr, float* defaultSpacing = nullptr);
+rltFont rltLoadFontTTFMemory(const void* data, size_t dataSize, float fontSize, const std::set<int>* glyphRange = nullptr, float* defaultSpacing = nullptr);
 
 void rltUnloadFont(rltFont* font);
 
 void rltDrawText(std::string_view text, float size, const Vector2& position, Color tint, const rltFont* font = nullptr);
+
+float rltDrawTextWrapped(std::string_view text, float size, const Vector2& position, float width, Color tint, const rltFont* font = nullptr);

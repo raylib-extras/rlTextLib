@@ -28,7 +28,8 @@ Use this as a starting point or replace it with your code.
 #include "game.h"   // an external header in this project
 #include "rlText.h"	// an external header in the static lib project
 
-
+rltFont ttfFont;
+Font oldTTFFont;
 
 void GameInit()
 {
@@ -37,6 +38,9 @@ void GameInit()
     SetTargetFPS(144);
 
     // load resources
+
+    ttfFont = rltLoadFontTTF("resources/anonymous_pro_bold.ttf", 20);
+    oldTTFFont = LoadFontEx("resources/anonymous_pro_bold.ttf", 20, nullptr, 0);
 }
 
 void GameCleanup()
@@ -57,18 +61,22 @@ void GameDraw()
     ClearBackground(DARKGRAY);
 
     double newStart = GetTime();
-    rltDrawText("Hello Raylib I AM NEW DRAWING!!!!", 20, Vector2{10,10}, BLACK);
+    rltDrawText("Hello Raylib I AM NEW DRAWING!!!!", 20, Vector2{10,10}, BLACK, &ttfFont);
     double newDelta = GetTime() - newStart;
     rltDrawText(TextFormat("new time %f", newDelta * 1000.0f), 20, Vector2{10,30}, BLACK);
 
     double oldStart = GetTime();
-    DrawText("Hello Raylib I AM OLD DRAWING!!!!", 10, 60, 20, BLACK);
+    DrawTextEx(oldTTFFont, "Hello Raylib I AM OLD DRAWING!!!!", Vector2{ 10, 60 }, 20,2 , BLACK);
     double oldDelta = GetTime() - oldStart;
 
     rltDrawText(TextFormat("old time %f", oldDelta * 1000.0f), 20, Vector2{ 10,80 }, BLACK);
 
-
     rltDrawText("Text is text\nI am more Text\nBruh!", 20, Vector2{ 10,100 }, BLACK);
+
+    rltDrawTextWrapped("Text is text I am more Text Bruh! Brosef... how many lines does this come out to?", 20, Vector2{ 10,160 }, 200, DARKBROWN);
+   
+    DrawTexture(ttfFont.texture, 200, 200, WHITE);
+    
     EndDrawing();
 }
 
