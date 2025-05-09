@@ -33,7 +33,6 @@ Use this as a starting point or replace it with your code.
 #include <array>
 
 rltFont ttfFont;
-Font oldTTFFont;
 
 void GameInit()
 {
@@ -41,26 +40,26 @@ void GameInit()
 	InitWindow(InitialWidth, InitialHeight, "Example");
 	SetTargetFPS(144);
 
+	// set up a glpyh set with the standard range and some extra characters
 	rltGlyphSet fontSet;
 	rltGetStandardGlyphSet(fontSet);
 	rltAddRangeToGlyphSet(255, 300, fontSet);
 	rltAddGlyphSetFromString(u8"~¿ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖ×ØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõö÷øùúûüýþ", fontSet);
 
+	// load a ttf font with the defined font set, if you do not provide a set, the standard set will be used.
 	ttfFont = rltLoadFontTTF("resources/anonymous_pro_bold.ttf", 20, &fontSet);
 
+	// add a custom glyph to the font
 	Image logo = LoadImage("resources/raylib_logo.png");
 	ImageResize(&logo, 20, 20);
 
 	int codePointSize = 0;
 	rltAddGlpyhToFont(&ttfFont, GetCodepoint(u8"😊", &codePointSize), logo);
-
-	oldTTFFont = LoadFontEx("resources/anonymous_pro_bold.ttf", 20, nullptr, 0);
 }
 
 void GameCleanup()
 {
 	// unload resources
-	UnloadFont(oldTTFFont);
 	rltUnloadFont(&ttfFont);
 
 	CloseWindow();
@@ -76,30 +75,31 @@ void GameDraw()
 	BeginDrawing();
 	ClearBackground(BLACK);
 
-	double newStart = GetTime();
-	rltDrawText(u8"Hello Raylib \a#FF0000FFI \a#FFFF00FFAM \a#FF00FFFFNEW \a#00FF00FFDRAWING!!!!", 20, Vector2{ 10,10 }, WHITE, &ttfFont);
-	double newDelta = GetTime() - newStart;
-	rltDrawText(TextFormat("new time %f", newDelta * 1000.0f), 20, Vector2{ 10,30 }, WHITE);
+	// Text with colors
+	rltDrawText(u8"Hello Raylib \a#FF0000FFI \a#FFFF00FFAM \a#FF00FFFFDrawing \a#00FF00FFIn Color!!!!", 20, Vector2{ 10,10 }, WHITE, &ttfFont);
 
-	double oldStart = GetTime();
-	DrawTextEx(oldTTFFont, "Hello Raylib I AM OLD DRAWING!!!!", Vector2{ 10, 60 }, 20, 1, WHITE);
-	double oldDelta = GetTime() - oldStart;
+	// Text with alignment
+	rltDrawTextJustified(u8"I am Centered \a#FFFFFFFF😊", 20, Vector2{ GetScreenWidth() * 0.5f, 50 }, YELLOW, rltAllignment::Center, &ttfFont);
 
-	rltDrawText(TextFormat("old time %f", oldDelta * 1000.0f), 20, Vector2{ 10,80 }, WHITE);
-
-	std::string textWithNewlines = "Text is text with newlines\nI am more Text\nBruh!";
+	// Text with newlines
+	std::string textWithNewlines = "This is text with newlines\nI am more Text\nCheck out my sweet bounding box!";
 	rltDrawText(textWithNewlines, 20, Vector2{ 10,100 }, WHITE, &ttfFont);
 
+	// bounding box of text with newlines
 	auto rectSize = rltMeasureText(textWithNewlines, 20, &ttfFont);
 	Rectangle bounds = { 10,100, rectSize.x, rectSize.y };
 	DrawRectangleLinesEx(bounds, 1, ColorAlpha(BLUE, 0.5f));
 
+	// Text fit to a width with word wrap
 	float width = 350 + sinf(float(GetTime())) * 100;
-	rltDrawTextWrapped(u8"This is text fit to a width. I am more Text Bruh! Brosef... how many lines does this come out to? ÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒ\n\a#FFFFFFFF😊", 20, Vector2{ 10,200 }, width, PURPLE, &ttfFont);
+	rltDrawTextWrapped(u8"This is text fit to a width. I am more Text How do you like me now?... how many lines does this come out to?  who knows? Here are some Unicode characters to hold you over ÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒ\n\a#FFFFFFFF😊💩", 20, Vector2{ 10,200 }, width, RAYWHITE, &ttfFont);
 	DrawLine(int(width), 200, int(width), 400, SKYBLUE);
 
+
+	// font atlas with glyph rects
 	Vector2 offset = { 500,200 };
 
+	rltDrawText("Font atlas", 20, Vector2{ offset.x, offset.y - 20 }, WHITE);
 	DrawTexture(ttfFont.Texture, int(offset.x), int(offset.y), WHITE);
 
 	for (auto& range : ttfFont.Ranges)

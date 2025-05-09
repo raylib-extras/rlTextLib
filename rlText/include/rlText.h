@@ -41,7 +41,7 @@ struct rltGlyphInfo
 
 struct rltGlyphRange
 {
-	int Start = 0;
+	size_t Start = 0;
 	std::vector<rltGlyphInfo> Glyphs;
 };
 
@@ -88,7 +88,7 @@ enum class rltAllignment
 	Right,
 };
 
-void rltDrawTextJustified(std::string_view text, float size, const Vector2& position, Color tint, float width, rltAllignment allignment, const rltFont* font = nullptr);
+void rltDrawTextJustified(std::string_view text, float size, const Vector2& position, Color tint, rltAllignment allignment, const rltFont* font = nullptr);
 
 float rltDrawTextWrapped(std::string_view text, float size, const Vector2& position, float width, Color tint, const rltFont* font = nullptr);
 

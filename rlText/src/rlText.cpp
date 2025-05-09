@@ -451,7 +451,8 @@ rltFont rltLoadFontTTFMemory(const void* data, size_t dataSize, float fontSize, 
 	font.InvalidGlyph.Offset = Vector2Zeros;
 	font.InvalidGlyph.SourceRect = invalidRect;
 	font.InvalidGlyph.Value = -1;
-
+	font.InvalidGlyph.DestSize.x = invalidRect.width / rasterScale;
+	font.InvalidGlyph.DestSize.y = invalidRect.height / rasterScale;
 
 	font.Texture = LoadTextureFromImage(fontAtlas);
 
@@ -474,7 +475,7 @@ const rltGlyphInfo* rtlGetFontGlyph(const rltFont* font, int id)
 {
 	for (auto& range : font->Ranges)
 	{
-		if (id > range.Start + range.Glyphs.size())
+		if (id < range.Start || id >(range.Start + range.Glyphs.size()))
 			continue;
 
 		return &range.Glyphs[id - range.Start];
@@ -596,8 +597,7 @@ void rltDrawText(std::string_view text, float size, const Vector2& position, Col
 		DrawGlyph(glyph, position, currentPos, tintToUse, fontToUse, scale);
 	}
 }
-
-void rltDrawTextJustified(std::string_view text, float size, const Vector2& position, Color tint, rltAllignment allignment, float width, const rltFont* font)
+void rltDrawTextJustified(std::string_view text, float size, const Vector2& position, Color tint, rltAllignment allignment, const rltFont* font)
 {
 	auto bounds = rltMeasureText(text, size, font);
 
@@ -606,14 +606,16 @@ void rltDrawTextJustified(std::string_view text, float size, const Vector2& posi
 	{
 	default:
 	case rltAllignment::Left:
-			break;
+		break;
 
 	case rltAllignment::Center:
-		origin.x += width / 2 - bounds.x / 2;
+		// origin is the center
+		origin.x -= bounds.x / 2;
 		break;
 
 	case rltAllignment::Right:
-		origin.x += width - size;
+		// origin is the right
+		origin.x -= bounds.x;
 		break;
 	}
 	rltDrawText(text, size, origin, tint, font);
@@ -715,7 +717,7 @@ bool rltFontHasAllGlyphsInString(rltFont* font, std::string_view text)
 bool GlyphLocationIsValid(rltFont* font, Rectangle& rectangle)
 {
 	float right = rectangle.x + rectangle.width + font->GlyphPadding;
-    float bottom = rectangle.y + rectangle.height + font->GlyphPadding;
+	float bottom = rectangle.y + rectangle.height + font->GlyphPadding;
 
 	float cornerY = font->InvalidGlyph.SourceRect.y - font->GlyphPadding;
 	float cornerX = font->InvalidGlyph.SourceRect.x - font->GlyphPadding;
@@ -743,7 +745,7 @@ bool GlyphLocationIsValid(rltFont* font, Rectangle& rectangle)
 		return true;
 	}
 
-    return true;
+	return true;
 }
 
 bool rltAddGlpyhToFont(rltFont* font, int codepoint, Image& glpyhImage, const Vector2& offeset, float advance)
