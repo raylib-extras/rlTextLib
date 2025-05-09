@@ -8,6 +8,8 @@ rlText is a library that contains an alternate font rendering system for raylib,
 * Better handling of glpyh ranges
 * Custom glyphs
 * Inline color changes
+* Kerning
+* Flip Y for use with render textures
 
 # Building
 This library uses Game-premake from
@@ -38,5 +40,4 @@ You must specify all 4 components of the HTML color, including the alpha
 * Use width based atlasing with ability to grow
 * Cache multiple sizes of glyph in the same atlas?
 * Change atlas to RGBA if color glpyhs are added
-* Option to flip the Y of text for use on a render texture
 ![image](https://raw.githubusercontent.com/JeffM2501/rlText/refs/heads/main/demo.gif)

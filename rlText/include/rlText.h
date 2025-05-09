@@ -27,6 +27,7 @@ Use this as a starting point or replace it with your code.
 #include "raymath.h"
 
 #include <set>
+#include <map>
 #include <vector>
 #include <string>
 
@@ -37,6 +38,8 @@ struct rltGlyphInfo
 	float       NextCharacterAdvance = 0;
 	Rectangle   SourceRect = { 0,0,0,0 };
 	Vector2		DestSize = { 0,0 };
+
+	std::map<int, float> KerningInfo;
 };
 
 struct rltGlyphRange
@@ -80,6 +83,8 @@ bool rltFontHasAllGlyphsInString(rltFont* font, std::string_view text);
 bool rltAddGlpyhToFont(rltFont* font, int codepoint, Image& glpyhImage, const Vector2& offeset = Vector2Zeros, float advance = -1);
 
 void rltDrawText(std::string_view text, float size, const Vector2& position, Color tint, const rltFont* font = nullptr);
+
+void rltSetTextYFlip(bool flip = true);
 
 enum class rltAllignment
 {

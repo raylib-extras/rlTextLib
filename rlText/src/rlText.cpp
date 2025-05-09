@@ -36,6 +36,13 @@ Use this as a starting point or replace it with your code.
 
 static rltFont DefaultFont;
 
+static bool TextIsYFlipped = false;
+
+void rltSetTextYFlip(bool flip)
+{
+	TextIsYFlipped = flip;
+}
+
 #define REUSE_DEFAULT_TEXTUREID 1
 
 void LoadDefaultFont()
@@ -255,6 +262,8 @@ rltFont rltLoadFontTTFMemory(const void* data, size_t dataSize, float fontSize, 
 	if (!stbtt_InitFont(&fontInfo, (unsigned char*)data, 0))
 		return font;
 
+	std::map<int, int> indexToCodepoint;
+
 	float rasterScale = 1.0f;
 	// if we are auto scaling for high DPI, load the font at the scaled size, so that the pixel map is the right size
 	if (IsWindowState(FLAG_WINDOW_HIGHDPI))
@@ -283,6 +292,8 @@ rltFont rltLoadFontTTFMemory(const void* data, size_t dataSize, float fontSize, 
 
 		if (index <= 0)
 			continue;
+
+		indexToCodepoint[index] = codepoint;
 
 		if (!currentRange || codepoint != lastCodePoint + 1)
 		{
@@ -334,6 +345,43 @@ rltFont rltLoadFontTTFMemory(const void* data, size_t dataSize, float fontSize, 
 		// we will composite this later
 		glyphImages.insert_or_assign(codepoint, glyphImage);
 	}
+
+	// kerning table
+
+	auto tableSize = stbtt_GetKerningTableLength(&fontInfo);
+	std::vector<stbtt_kerningentry> kerningTable(tableSize);
+
+	stbtt_GetKerningTable(&fontInfo, kerningTable.data(), tableSize);
+
+	for (auto& entry : kerningTable)
+	{
+		auto fromGlyphItr = indexToCodepoint.find(entry.glyph1);
+		auto toGlyphItr = indexToCodepoint.find(entry.glyph2);
+
+		if (fromGlyphItr == indexToCodepoint.end() || toGlyphItr == indexToCodepoint.end())
+			continue;
+
+		int fromCodepoint = fromGlyphItr->second;
+		int toCodepoint = toGlyphItr->second;
+
+		rltGlyphInfo* fromGlyph = nullptr;
+
+		for (auto& range : font.Ranges)
+		{
+			if (fromCodepoint < range.Start || fromCodepoint >(range.Start + range.Glyphs.size()))
+				continue;
+
+			fromGlyph = &range.Glyphs[fromCodepoint - range.Start];
+			break;
+		}
+
+		if (!fromGlyph)
+			continue;
+
+		fromGlyph->KerningInfo[toCodepoint] = (entry.advance * scaleFactor) / rasterScale;
+	}
+
+	// atlas generation
 
 	Image fontAtlas = { 0 };
 
@@ -508,9 +556,17 @@ void DrawGlyph(const rltGlyphInfo* glyph, const Vector2& position, Vector2& curr
 {
 	if (glyph)
 	{
-		Rectangle destRect = { position.x + currentPos.x + (glyph->Offset.x * scale), position.y + currentPos.y + (glyph->Offset.y * scale), glyph->DestSize.x * scale , glyph->DestSize.y * scale };
+		float offsetY = position.y + currentPos.y + (glyph->Offset.y * scale);
 
-		DrawTexturePro(font->Texture, glyph->SourceRect, destRect, Vector2Zeros, 0, tint);
+		Rectangle srcRect = glyph->SourceRect;
+		if (TextIsYFlipped)
+		{
+			srcRect.height *= -1;
+			offsetY = position.y + currentPos.y; // TODO, should the offset be computed here?
+		}
+		Rectangle destRect = { position.x + currentPos.x + (glyph->Offset.x * scale), offsetY , glyph->DestSize.x * scale , glyph->DestSize.y * scale };
+
+		DrawTexturePro(font->Texture, srcRect, destRect, Vector2Zeros, 0, tint);
 		currentPos.x += destRect.width;
 
 		currentPos.x += font->DefaultSpacing * scale;
@@ -590,13 +646,29 @@ void rltDrawText(std::string_view text, float size, const Vector2& position, Col
 
 	Color tintToUse = tint;
 
+	const rltGlyphInfo* lastGlyph = nullptr;
+
 	for (size_t i = 0; i < text.size();)
 	{
 		tintToUse = ProcessColorSequence(text, i, tintToUse);
-		const auto* glyph = GetGlyphForCodePoint(text.data(), i, currentPos, fontToUse, scale);
+		const rltGlyphInfo* glyph = GetGlyphForCodePoint(text.data(), i, currentPos, fontToUse, scale);
+
+		if (lastGlyph && glyph && !lastGlyph->KerningInfo.empty())
+		{
+			auto itr = lastGlyph->KerningInfo.find(glyph->Value);
+			if (itr != lastGlyph->KerningInfo.end())
+			{
+				if (currentPos.x > 0)
+					currentPos.x += itr->second * scale;
+			}
+		}
+
 		DrawGlyph(glyph, position, currentPos, tintToUse, fontToUse, scale);
+
+		lastGlyph = glyph;
 	}
 }
+
 void rltDrawTextJustified(std::string_view text, float size, const Vector2& position, Color tint, rltAllignment allignment, const rltFont* font)
 {
 	auto bounds = rltMeasureText(text, size, font);
@@ -631,6 +703,8 @@ float rltDrawTextWrapped(std::string_view text, float size, const Vector2& posit
 
 	float scale = size / fontToUse->BaseSize;
 
+	const rltGlyphInfo* lastGlyph = nullptr;
+
 	Color tintToUse = tint;
 	for (size_t i = 0; i < text.size();)
 	{
@@ -648,7 +722,19 @@ float rltDrawTextWrapped(std::string_view text, float size, const Vector2& posit
 			currentPos.y += fontToUse->DefaultNewlineOffset * scale;
 		}
 
+		if (lastGlyph && glyph && !lastGlyph->KerningInfo.empty())
+		{
+			auto itr = lastGlyph->KerningInfo.find(glyph->Value);
+			if (itr != lastGlyph->KerningInfo.end())
+			{
+				if (currentPos.x > 0)
+					currentPos.x += itr->second * scale;
+			}
+		}
+
 		DrawGlyph(glyph, position, currentPos, tintToUse, fontToUse, scale);
+
+		lastGlyph = glyph;
 	}
 
 	return currentPos.y + fontToUse->DefaultNewlineOffset * scale;
