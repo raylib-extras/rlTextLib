@@ -44,7 +44,7 @@ std::string TextNewlines = "Lorem ipsum dolor sit amet, consectetur adipiscing e
 
 void GameInit()
 {
-	SetConfigFlags(FLAG_VSYNC_HINT | FLAG_WINDOW_RESIZABLE /*| FLAG_WINDOW_HIGHDPI*/);
+	SetConfigFlags(FLAG_VSYNC_HINT | FLAG_WINDOW_RESIZABLE | FLAG_WINDOW_HIGHDPI);
 	InitWindow(InitialWidth, InitialHeight, "Example");
 	SetTargetFPS(144);
 
