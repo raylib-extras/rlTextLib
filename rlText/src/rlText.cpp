@@ -141,9 +141,9 @@ void LoadDefaultFont()
 	}
 
 	if (REUSE_DEFAULT_TEXTUREID == 1)
-		DefaultFont.texture = GetFontDefault().texture;
+		DefaultFont.Texture = GetFontDefault().texture;
 	else
-		DefaultFont.texture = LoadTextureFromImage(imFont);
+		DefaultFont.Texture = LoadTextureFromImage(imFont);
 
 	// Reconstruct charSet using charsWidth[], charsHeight, charsDivisor, glyphCount
 	//------------------------------------------------------------------------------
@@ -186,7 +186,7 @@ void LoadDefaultFont()
 			currentPosX = testPosX;
 		}
 	}
-
+	DefaultFont.LowestSourceRect = float(imFont.height);
 	UnloadImage(imFont);
 }
 
@@ -401,6 +401,11 @@ rltFont rltLoadFontTTFMemory(const void* data, size_t dataSize, float fontSize, 
 
 			glyphInfo.SourceRect = { float(offsetX), float(offsetY), float(image.width), float(image.height) };
 
+			if (glyphInfo.SourceRect.y + glyphInfo.SourceRect.height > font.LowestSourceRect)
+				font.LowestSourceRect = glyphInfo.SourceRect.y + glyphInfo.SourceRect.height;
+
+			font.LastSourceRectX = glyphInfo.SourceRect.x + glyphInfo.SourceRect.width;
+
 			// copy the image to just the alpha
 			for (size_t y = 0; y < image.height; y++)
 			{
@@ -448,7 +453,7 @@ rltFont rltLoadFontTTFMemory(const void* data, size_t dataSize, float fontSize, 
 	font.InvalidGlyph.Value = -1;
 
 
-	font.texture = LoadTextureFromImage(fontAtlas);
+	font.Texture = LoadTextureFromImage(fontAtlas);
 
 	UnloadImage(fontAtlas);
 
@@ -460,6 +465,9 @@ void rltUnloadFont(rltFont* font)
 	if (font == &DefaultFont)
 		return;
 
+	UnloadTexture(font->Texture);
+
+	font->Ranges.clear();
 }
 
 const rltGlyphInfo* rtlGetFontGlyph(const rltFont* font, int id)
@@ -495,14 +503,13 @@ const rltGlyphInfo* GetGlyphForCodePoint(const char* data, size_t& index, Vector
 	return rtlGetFontGlyph(font, codepoint);
 }
 
-
 void DrawGlyph(const rltGlyphInfo* glyph, const Vector2& position, Vector2& currentPos, Color tint, const rltFont* font, float scale)
 {
 	if (glyph)
 	{
 		Rectangle destRect = { position.x + currentPos.x + (glyph->Offset.x * scale), position.y + currentPos.y + (glyph->Offset.y * scale), glyph->DestSize.x * scale , glyph->DestSize.y * scale };
 
-		DrawTexturePro(font->texture, glyph->SourceRect, destRect, Vector2Zeros, 0, tint);
+		DrawTexturePro(font->Texture, glyph->SourceRect, destRect, Vector2Zeros, 0, tint);
 		currentPos.x += destRect.width;
 
 		currentPos.x += font->DefaultSpacing * scale;
@@ -538,7 +545,6 @@ int getDigit(const char input)
 	}
 	return 0;
 }
-
 
 unsigned char GetHexValue(const char* ptr, size_t& offset)
 {
@@ -581,9 +587,6 @@ void rltDrawText(std::string_view text, float size, const Vector2& position, Col
 
 	float scale = size / fontToUse->BaseSize;
 
-	// 	if (IsWindowState(FLAG_WINDOW_HIGHDPI))
-	// 		scale /= GetWindowScaleDPI().y;
-
 	Color tintToUse = tint;
 
 	for (size_t i = 0; i < text.size();)
@@ -592,6 +595,28 @@ void rltDrawText(std::string_view text, float size, const Vector2& position, Col
 		const auto* glyph = GetGlyphForCodePoint(text.data(), i, currentPos, fontToUse, scale);
 		DrawGlyph(glyph, position, currentPos, tintToUse, fontToUse, scale);
 	}
+}
+
+void rltDrawTextJustified(std::string_view text, float size, const Vector2& position, Color tint, rltAllignment allignment, float width, const rltFont* font)
+{
+	auto bounds = rltMeasureText(text, size, font);
+
+	Vector2 origin = position;
+	switch (allignment)
+	{
+	default:
+	case rltAllignment::Left:
+			break;
+
+	case rltAllignment::Center:
+		origin.x += width / 2 - bounds.x / 2;
+		break;
+
+	case rltAllignment::Right:
+		origin.x += width - size;
+		break;
+	}
+	rltDrawText(text, size, origin, tint, font);
 }
 
 float rltDrawTextWrapped(std::string_view text, float size, const Vector2& position, float width, Color tint, const rltFont* font)
@@ -603,9 +628,6 @@ float rltDrawTextWrapped(std::string_view text, float size, const Vector2& posit
 	Vector2 currentPos = Vector2Zeros;
 
 	float scale = size / fontToUse->BaseSize;
-
-	// 	if (IsWindowState(FLAG_WINDOW_HIGHDPI))
-	// 		scale /= GetWindowScaleDPI().y;
 
 	Color tintToUse = tint;
 	for (size_t i = 0; i < text.size();)
@@ -690,6 +712,40 @@ bool rltFontHasAllGlyphsInString(rltFont* font, std::string_view text)
 	return true;
 }
 
+bool GlyphLocationIsValid(rltFont* font, Rectangle& rectangle)
+{
+	float right = rectangle.x + rectangle.width + font->GlyphPadding;
+    float bottom = rectangle.y + rectangle.height + font->GlyphPadding;
+
+	float cornerY = font->InvalidGlyph.SourceRect.y - font->GlyphPadding;
+	float cornerX = font->InvalidGlyph.SourceRect.x - font->GlyphPadding;
+
+	// we have plenty of space
+	if (right <= font->Texture.width && bottom < cornerY)
+		return true;
+
+	// we are over the right side
+	if (right > font->Texture.width)
+	{
+		// move down to the left
+		rectangle.y = font->LowestSourceRect + font->GlyphPadding;
+		rectangle.x = font->GlyphPadding;
+
+		// we are out of room
+		if (rectangle.y + rectangle.height > font->Texture.height)
+			return false;
+
+		// it's too big to even fit
+		if (rectangle.x + rectangle.width + font->GlyphPadding > font->Texture.width)
+			return false;
+
+		// it can fit
+		return true;
+	}
+
+    return true;
+}
+
 bool rltAddGlpyhToFont(rltFont* font, int codepoint, Image& glpyhImage, const Vector2& offeset, float advance)
 {
 	if (!font)
@@ -697,33 +753,24 @@ bool rltAddGlpyhToFont(rltFont* font, int codepoint, Image& glpyhImage, const Ve
 
 	auto& lastRect = font->Ranges.back().Glyphs.back().SourceRect;
 
-	Vector2 nextSourceRectStart = { lastRect.x + lastRect.width + font->GlyphPadding , lastRect.y };
+	Rectangle nextSourceRect = { font->LastSourceRectX + lastRect.width + font->GlyphPadding , lastRect.y, float(glpyhImage.width), float(glpyhImage.height) };
 
-	// do we have enough height
-	if (nextSourceRectStart.y + glpyhImage.height >= font->texture.height)
+	if (!GlyphLocationIsValid(font, nextSourceRect))
 		return false;
 
-	if (nextSourceRectStart.y + glpyhImage.height >= font->texture.height - font->InvalidGlyph.SourceRect.y)
-	{
-		// do we have enough width
-		if (nextSourceRectStart.x + glpyhImage.width + font->GlyphPadding >= font->InvalidGlyph.SourceRect.x)
-			return false;
-	}
-	else
-	{
-		// do we have enough width
-		if (nextSourceRectStart.x + glpyhImage.width + font->GlyphPadding >= font->InvalidGlyph.SourceRect.x)
-			return false;
-	}
-
-	Image bitmap = LoadImageFromTexture(font->texture);
+	Image bitmap = LoadImageFromTexture(font->Texture);
 
 	rltGlyphInfo newGlyph;
 
 	newGlyph.Value = codepoint;
-	newGlyph.SourceRect = { nextSourceRectStart.x,nextSourceRectStart.y, float(glpyhImage.width), float(glpyhImage.height) };
+	newGlyph.SourceRect = nextSourceRect;
 	newGlyph.DestSize.x = newGlyph.SourceRect.width;
 	newGlyph.DestSize.y = newGlyph.SourceRect.height;
+
+	if (nextSourceRect.y + nextSourceRect.height > font->LowestSourceRect)
+		font->LowestSourceRect = nextSourceRect.y + nextSourceRect.height;
+
+	font->LastSourceRectX = nextSourceRect.x + nextSourceRect.width;
 
 	newGlyph.Offset = offeset;
 	newGlyph.NextCharacterAdvance = advance;
@@ -736,7 +783,7 @@ bool rltAddGlpyhToFont(rltFont* font, int codepoint, Image& glpyhImage, const Ve
 		newGlyph.SourceRect,
 		WHITE);
 
-	UpdateTexture(font->texture, bitmap.data);
+	UpdateTexture(font->Texture, bitmap.data);
 	UnloadImage(bitmap);
 
 	for (auto itr = font->Ranges.begin(); itr != font->Ranges.end(); itr++)

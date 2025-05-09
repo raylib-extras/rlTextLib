@@ -47,7 +47,7 @@ struct rltGlyphRange
 
 struct rltFont
 {
-	float BaseSize;
+	float BaseSize = 0;
 	float GlyphPadding = 0;
 	float DefaultSpacing = 0;
 	float DefaultNewlineOffset = 0;
@@ -56,7 +56,9 @@ struct rltFont
 
 	rltGlyphInfo InvalidGlyph;
 
-	Texture2D texture;
+	Texture2D Texture = { 0 };
+	float LowestSourceRect = 0;
+	float LastSourceRectX = 0;
 };
 
 const rltFont& rltGetDefaultFont();
@@ -78,6 +80,15 @@ bool rltFontHasAllGlyphsInString(rltFont* font, std::string_view text);
 bool rltAddGlpyhToFont(rltFont* font, int codepoint, Image& glpyhImage, const Vector2& offeset = Vector2Zeros, float advance = -1);
 
 void rltDrawText(std::string_view text, float size, const Vector2& position, Color tint, const rltFont* font = nullptr);
+
+enum class rltAllignment
+{
+	Left,
+	Center,
+	Right,
+};
+
+void rltDrawTextJustified(std::string_view text, float size, const Vector2& position, Color tint, float width, rltAllignment allignment, const rltFont* font = nullptr);
 
 float rltDrawTextWrapped(std::string_view text, float size, const Vector2& position, float width, Color tint, const rltFont* font = nullptr);
 

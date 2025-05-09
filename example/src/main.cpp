@@ -41,7 +41,6 @@ void GameInit()
 	InitWindow(InitialWidth, InitialHeight, "Example");
 	SetTargetFPS(144);
 
-
 	rltGlyphSet fontSet;
 	rltGetStandardGlyphSet(fontSet);
 	rltAddRangeToGlyphSet(255, 300, fontSet);
@@ -50,7 +49,7 @@ void GameInit()
 	ttfFont = rltLoadFontTTF("resources/anonymous_pro_bold.ttf", 20, &fontSet);
 
 	Image logo = LoadImage("resources/raylib_logo.png");
-	ImageResize(&logo, 48, 48);
+	ImageResize(&logo, 20, 20);
 
 	int codePointSize = 0;
 	rltAddGlpyhToFont(&ttfFont, GetCodepoint(u8"😊", &codePointSize), logo);
@@ -61,6 +60,8 @@ void GameInit()
 void GameCleanup()
 {
 	// unload resources
+	UnloadFont(oldTTFFont);
+	rltUnloadFont(&ttfFont);
 
 	CloseWindow();
 }
@@ -93,13 +94,13 @@ void GameDraw()
 	Rectangle bounds = { 10,100, rectSize.x, rectSize.y };
 	DrawRectangleLinesEx(bounds, 1, ColorAlpha(BLUE, 0.5f));
 
-	float width = 250 + sinf(GetTime()) * 50;
-	rltDrawTextWrapped(u8"This is text fit to a width. I am more Text Bruh! Brosef... how many lines does this come out to? ÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒ\n😊", 20, Vector2{ 10,200 }, width, PURPLE, &ttfFont);
-	DrawLine(width, 200, width, 400, SKYBLUE);
+	float width = 350 + sinf(float(GetTime())) * 100;
+	rltDrawTextWrapped(u8"This is text fit to a width. I am more Text Bruh! Brosef... how many lines does this come out to? ÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒ\n\a#FFFFFFFF😊", 20, Vector2{ 10,200 }, width, PURPLE, &ttfFont);
+	DrawLine(int(width), 200, int(width), 400, SKYBLUE);
 
 	Vector2 offset = { 500,200 };
 
-	DrawTexture(ttfFont.texture, offset.x, offset.y, WHITE);
+	DrawTexture(ttfFont.Texture, int(offset.x), int(offset.y), WHITE);
 
 	for (auto& range : ttfFont.Ranges)
 	{
