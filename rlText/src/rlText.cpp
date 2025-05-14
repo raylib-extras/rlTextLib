@@ -834,7 +834,7 @@ bool GlyphLocationIsValid(rltFont* font, Rectangle& rectangle)
 	return true;
 }
 
-bool rltAddGlpyhToFont(rltFont* font, int codepoint, Image& glpyhImage, const Vector2& offeset, float advance)
+bool rltAddGlpyhToFont(rltFont* font, int codepoint, Image& glpyhImage, const Vector2& offeset, float advance, const Rectangle& sourceRect)
 {
 	if (!font)
 		return false;
@@ -847,6 +847,14 @@ bool rltAddGlpyhToFont(rltFont* font, int codepoint, Image& glpyhImage, const Ve
 		return false;
 
 	Image bitmap = LoadImageFromTexture(font->Texture);
+
+	bool newTexture = false;
+
+	if (bitmap.format == PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA && (glpyhImage.format != PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA || glpyhImage.format != PIXELFORMAT_UNCOMPRESSED_GRAYSCALE))
+	{
+		ImageFormat(&bitmap, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8);
+		newTexture = true;
+	}
 
 	rltGlyphInfo newGlyph;
 
@@ -865,13 +873,25 @@ bool rltAddGlpyhToFont(rltFont* font, int codepoint, Image& glpyhImage, const Ve
 	if (newGlyph.NextCharacterAdvance < 0)
 		newGlyph.NextCharacterAdvance = font->DefaultSpacing;
 
+	Rectangle imageSourceRect = sourceRect;
+	if (imageSourceRect.width == 0)
+		imageSourceRect = Rectangle{ 0,0, float(glpyhImage.width), float(glpyhImage.height) };
+
 	ImageDraw(&bitmap,
 		glpyhImage,
-		Rectangle{ 0,0, float(glpyhImage.width), float(glpyhImage.height) },
+		imageSourceRect,
 		newGlyph.SourceRect,
 		WHITE);
 
-	UpdateTexture(font->Texture, bitmap.data);
+	if (newTexture)
+	{
+		UnloadTexture(font->Texture);
+		font->Texture = LoadTextureFromImage(bitmap);
+	}
+	else
+	{
+		UpdateTexture(font->Texture, bitmap.data);
+	}
 	UnloadImage(bitmap);
 
 	for (auto itr = font->Ranges.begin(); itr != font->Ranges.end(); itr++)

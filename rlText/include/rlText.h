@@ -80,7 +80,7 @@ void rltUnloadFont(rltFont* font);
 bool rltFontHasCodepoint(rltFont* font, int codepoint);
 bool rltFontHasAllGlyphsInString(rltFont* font, std::string_view text);
 
-bool rltAddGlpyhToFont(rltFont* font, int codepoint, Image& glpyhImage, const Vector2& offeset = Vector2Zeros, float advance = -1);
+bool rltAddGlpyhToFont(rltFont* font, int codepoint, Image& glpyhImage, const Vector2& offeset = Vector2Zeros, float advance = -1, const Rectangle& sourceRect = Rectangle{0,0,0,0});
 
 void rltDrawText(std::string_view text, float size, const Vector2& position, Color tint, const rltFont* font = nullptr);
 

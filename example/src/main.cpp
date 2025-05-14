@@ -56,9 +56,15 @@ void GameInit()
 	// add a custom glyph to the font
 	Image logo = LoadImage("resources/raylib_logo.png");
 	ImageResize(&logo, fontSize, fontSize);
-
 	int codePointSize = 0;
 	rltAddGlpyhToFont(&ttfFont, GetCodepoint(u8"😊", &codePointSize), logo);
+	UnloadImage(logo);
+
+	// add custom color glpyh to the font
+    Image emoji = LoadImage("resources/face-with-tears-of-joy_1f602.png");
+    ImageResize(&emoji, fontSize, fontSize);
+    rltAddGlpyhToFont(&ttfFont, GetCodepoint(u8"😂", &codePointSize), emoji);
+    UnloadImage(emoji);
 
 	renderTexture = LoadRenderTexture(400 * GetWindowScaleDPI().x, 400 * GetWindowScaleDPI().y);
 }
@@ -95,6 +101,8 @@ void GameDraw()
 	BeginDrawing();
 	ClearBackground(BLACK);
 
+	DrawRectangleGradientV(0, 0, GetScreenWidth(), GetScreenHeight(), DARKGREEN, BLACK);
+
 	// Text with colors
 	rltDrawText(u8"-A Hello Raylib \a#FF0000FFI \a#FFFF00FFam \a#FF00FFFFDrawing \a#00FF00FFIn Color!!!!", fontSize, Vector2{ 10,10 }, WHITE, &ttfFont);
 
@@ -112,7 +120,7 @@ void GameDraw()
 
 	// Text fit to a width with word wrap
 	float width = 350 + sinf(float(GetTime() / 5)) * 100;
-	rltDrawTextWrapped(u8"This is text fit to a width. I am more Text How do you like me now?... how many lines does this come out to?  who knows? Here are some Unicode characters to hold you over ÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒ\n\a#FFFFFFFF😊💩", fontSize, Vector2{ 10,fontSize * 7 }, width, RAYWHITE, &ttfFont);
+	rltDrawTextWrapped(u8"😂 This is text fit to a width. I am more Text How do you like me now?... how many lines does this come out to?  who knows? Here are some Unicode characters to hold you over ÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒ\n\a#FFFFFFFF😊💩", fontSize, Vector2{ 10,fontSize * 7 }, width, RAYWHITE, &ttfFont);
 	DrawLine(int(width), fontSize * 7, int(width), fontSize * 14, SKYBLUE);
 
 	// font atlas with glyph rects
