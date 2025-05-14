@@ -36,8 +36,7 @@ This will swap to the red color after "\a#FF0000FF". The color state will stay u
 You must specify all 4 components of the HTML color, including the alpha
 
 # Todo
-* Merge glyphs from one font into another
-* Use width based atlasing with ability to grow
+* Merge glyphs from one font into another?
+* Use width based atlasing with ability to grow?
 * Cache multiple sizes of glyph in the same atlas?
-* Change atlas to RGBA if color glpyhs are added
 ![image](https://raw.githubusercontent.com/JeffM2501/rlText/refs/heads/main/demo.gif)
