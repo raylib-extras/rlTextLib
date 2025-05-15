@@ -523,7 +523,7 @@ const rltGlyphInfo* rtlGetFontGlyph(const rltFont* font, int id)
 {
 	for (auto& range : font->Ranges)
 	{
-		if (id < range.Start || id >(range.Start + range.Glyphs.size()))
+		if (id < range.Start || id >= (range.Start + range.Glyphs.size()))
 			continue;
 
 		return &range.Glyphs[id - range.Start];
@@ -841,10 +841,32 @@ bool rltAddGlpyhToFont(rltFont* font, int codepoint, Image& glpyhImage, const Ve
 
 	auto& lastRect = font->Ranges.back().Glyphs.back().SourceRect;
 
-	Rectangle nextSourceRect = { font->LastSourceRectX + lastRect.width + font->GlyphPadding , lastRect.y, float(glpyhImage.width), float(glpyhImage.height) };
+    Rectangle imageSourceRect = sourceRect;
+    if (imageSourceRect.width == 0)
+        imageSourceRect = Rectangle{ 0,0, float(glpyhImage.width), float(glpyhImage.height) };
+
+
+	Rectangle nextSourceRect = { font->LastSourceRectX + lastRect.width + font->GlyphPadding , lastRect.y, float(imageSourceRect.width), float(imageSourceRect.height) };
 
 	if (!GlyphLocationIsValid(font, nextSourceRect))
-		return false;
+	{
+		// double the image height
+		Image bitmap = LoadImageFromTexture(font->Texture);
+		UnloadTexture(font->Texture);
+
+		nextSourceRect.x = font->GlyphPadding;
+		nextSourceRect.y = bitmap.height + font->GlyphPadding;
+
+		ImageResizeCanvas(&bitmap, bitmap.width, bitmap.height * 2, 0, 0, BLANK);
+		font->Texture = LoadTextureFromImage(bitmap);
+	
+		UnloadImage(bitmap);
+
+        if (!GlyphLocationIsValid(font, nextSourceRect))
+        {
+			return false;
+        }
+	}
 
 	Image bitmap = LoadImageFromTexture(font->Texture);
 
@@ -872,10 +894,6 @@ bool rltAddGlpyhToFont(rltFont* font, int codepoint, Image& glpyhImage, const Ve
 	newGlyph.NextCharacterAdvance = advance;
 	if (newGlyph.NextCharacterAdvance < 0)
 		newGlyph.NextCharacterAdvance = font->DefaultSpacing;
-
-	Rectangle imageSourceRect = sourceRect;
-	if (imageSourceRect.width == 0)
-		imageSourceRect = Rectangle{ 0,0, float(glpyhImage.width), float(glpyhImage.height) };
 
 	ImageDraw(&bitmap,
 		glpyhImage,
@@ -919,4 +937,27 @@ bool rltAddGlpyhToFont(rltFont* font, int codepoint, Image& glpyhImage, const Ve
 	}
 
 	return false;
+}
+
+void rltMergeGlypRange(rltFont* destination, const rltFont* source, rltGlyphSet& glyphSet)
+{
+	if (!destination || !source || glyphSet.empty())
+		return;
+
+    Image bitmap = LoadImageFromTexture(source->Texture);
+
+	for (auto codepoint : glyphSet)
+	{
+		if (rltFontHasCodepoint(destination, codepoint))
+			continue;
+
+		const rltGlyphInfo* info = rtlGetFontGlyph(source, codepoint);
+
+		if (!info || info->Value < 0 || info->SourceRect.width <= 0)
+			continue;
+
+		rltAddGlpyhToFont(destination, codepoint, bitmap, info->Offset, info->NextCharacterAdvance, info->SourceRect);
+	}
+
+	UnloadImage(bitmap);
 }

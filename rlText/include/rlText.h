@@ -31,6 +31,30 @@ Use this as a starting point or replace it with your code.
 #include <vector>
 #include <string>
 
+namespace rltCommonCodepointRanges
+{
+    static constexpr int HiraganaStart = 0x3040;
+    static constexpr int HiraganaEnd = 0x309f;
+
+    static constexpr int KatakanaStart = 0x30a0;
+    static constexpr int KatakanaEnd = 0x30ff;
+
+    static constexpr int CyrillicStart = 0x0400;
+    static constexpr int CyrillicEnd = 0x04FF;
+
+    static constexpr int EmoticonsStart = 0x1F600;
+    static constexpr int EmoticonsEnd = 0x1F64F;
+
+    static constexpr int CJKUnifiedStart = 0x4E00;
+    static constexpr int CJKUnifiedEnd = 0x9FFF;
+
+    static constexpr int LatinExtendedAStart = 0x0100;
+    static constexpr int LatinExtendedAEnd = 0x017F;
+
+    static constexpr int LatinExtendedBStart = 0x0180;
+    static constexpr int LatinExtendedBEnd = 0x024F;
+}
+
 struct rltGlyphInfo
 {
 	int         Value = 0;
@@ -81,6 +105,8 @@ bool rltFontHasCodepoint(rltFont* font, int codepoint);
 bool rltFontHasAllGlyphsInString(rltFont* font, std::string_view text);
 
 bool rltAddGlpyhToFont(rltFont* font, int codepoint, Image& glpyhImage, const Vector2& offeset = Vector2Zeros, float advance = -1, const Rectangle& sourceRect = Rectangle{0,0,0,0});
+
+void rltMergeGlypRange(rltFont* destination, const rltFont* source, rltGlyphSet& glyphSet);
 
 void rltDrawText(std::string_view text, float size, const Vector2& position, Color tint, const rltFont* font = nullptr);
 
