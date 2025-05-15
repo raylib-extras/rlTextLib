@@ -48,7 +48,7 @@ void GameInit()
 	rltGetStandardGlyphSet(fontSet);
 	rltAddRangeToGlyphSet(255, 300, fontSet);
 	rltAddGlyphSetFromString(u8"~¿ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖ×ØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõö÷øùúûüýþ", fontSet);
-	
+
 	// load a ttf font with the defined font set, if you do not provide a set, the standard set will be used.
 	ttfFont = rltLoadFontTTF("resources/Vera.ttf", fontSize, &fontSet);
 
@@ -60,10 +60,10 @@ void GameInit()
 	UnloadImage(logo);
 
 	// add custom color glpyh to the font
-    Image colorEmoji = LoadImage("resources/face-with-tears-of-joy_1f602.png");
-    ImageResize(&colorEmoji, fontSize, fontSize);
-    rltAddGlpyhToFont(&ttfFont, GetCodepoint(u8"😂", &codePointSize), colorEmoji);
-    UnloadImage(colorEmoji);
+	Image colorEmoji = LoadImage("resources/face-with-tears-of-joy_1f602.png");
+	ImageResize(&colorEmoji, fontSize, fontSize);
+	rltAddGlpyhToFont(&ttfFont, GetCodepoint(u8"😂", &codePointSize), colorEmoji);
+	UnloadImage(colorEmoji);
 
 	renderTexture = LoadRenderTexture(400 * GetWindowScaleDPI().x, 400 * GetWindowScaleDPI().y);
 }

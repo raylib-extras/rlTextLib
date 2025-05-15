@@ -27,6 +27,7 @@ Use this as a starting point or replace it with your code.
 #include "raymath.h"
 
 #include <map>
+#include "external/glad.h"
 
 #include "external/stb_rect_pack.h"     // Required for: ttf/bdf font rectangles packaging
 
@@ -38,6 +39,23 @@ static rltFont DefaultFont;
 
 static bool TextIsYFlipped = false;
 
+
+static int MaxAtlasWidth = 0;
+
+void GetMaxAtlasWidth()
+{
+	if (MaxAtlasWidth != 0)
+		return;
+
+	MaxAtlasWidth = 2048;
+
+	GLint capability = 0;
+	glGetIntegerv(GL_MAX_TEXTURE_SIZE, &capability);
+
+	if (capability < MaxAtlasWidth)
+		MaxAtlasWidth = capability;
+}
+
 void rltSetTextYFlip(bool flip)
 {
 	TextIsYFlipped = flip;
@@ -47,6 +65,7 @@ void rltSetTextYFlip(bool flip)
 
 void LoadDefaultFont()
 {
+	GetMaxAtlasWidth();
 #define BIT_CHECK(a,b) ((a) & (1u << (b)))
 
 	// NOTE: Using UTF-8 encoding table for Unicode U+0000..U+00FF Basic Latin + Latin-1 Supplement
@@ -242,6 +261,8 @@ rltFont rltLoadFontTTF(std::string_view filePath, float fontSize, const rltGlyph
 
 rltFont rltLoadFontTTFMemory(const void* data, size_t dataSize, float fontSize, const rltGlyphSet* glyphSet, float* defaultSpacing)
 {
+	GetMaxAtlasWidth();
+
 	rltFont font;
 
 	font.BaseSize = fontSize;
@@ -388,37 +409,65 @@ rltFont rltLoadFontTTFMemory(const void* data, size_t dataSize, float fontSize, 
 	std::map<int, Rectangle> glyphRects;
 
 	// Calculate image size based on total glyph width and glyph row count
-	int totalWidth = 0;
-	int maxGlyphWidth = 0;
+	constexpr bool useMaxWidthAtlas = true;
 
-	for (auto& codepoint : *setTouse)
+	if (useMaxWidthAtlas)
 	{
-		if (glyphImages.find(codepoint) == glyphImages.end())
-			continue;
+		fontAtlas.width = MaxAtlasWidth;
+		fontAtlas.height = 0;
+		int y = font.GlyphPadding;
+		int x = font.GlyphPadding * 2 + effectivefontSize; // leave some room for the unknown glyph
 
-		if (glyphImages[codepoint].width > maxGlyphWidth)
-			maxGlyphWidth = glyphImages[codepoint].width;
+		for (auto& codepoint : *setTouse)
+		{
+			int thisItemBottom = y + glyphImages[codepoint].height + font.GlyphPadding;
 
-		totalWidth += glyphImages[codepoint].width + int(2 * font.GlyphPadding);
-	}
+			if (thisItemBottom > fontAtlas.height)
+				fontAtlas.height = thisItemBottom;
 
-	int paddedFontSize = int(effectivefontSize + 2 * font.GlyphPadding);
-	// No need for a so-conservative atlas generation
-	float totalArea = totalWidth * paddedFontSize * 1.2f;
-	float imageMinSize = sqrtf(totalArea);
-	int imageSize = (int)powf(2, ceilf(logf(imageMinSize) / logf(2)));
+			x += glyphImages[codepoint].width + font.GlyphPadding;
+			if (x > MaxAtlasWidth)
+			{
+				x = font.GlyphPadding;
+				y = fontAtlas.height;
+				fontAtlas.height = y + glyphImages[codepoint].height + font.GlyphPadding;
+			}
+		}
 
-	if (totalArea < ((imageSize * imageSize) / 2))
-	{
-		fontAtlas.width = imageSize;    // Atlas bitmap width
-		fontAtlas.height = imageSize / 2; // Atlas bitmap height
+		fontAtlas.height = pow(2, ceil(log(fontAtlas.height) / log(2)));
 	}
 	else
 	{
-		fontAtlas.width = imageSize;   // Atlas bitmap width
-		fontAtlas.height = imageSize;  // Atlas bitmap height
-	}
+		int totalWidth = 0;
+		int maxGlyphWidth = 0;
 
+		for (auto& codepoint : *setTouse)
+		{
+			if (glyphImages.find(codepoint) == glyphImages.end())
+				continue;
+
+			if (glyphImages[codepoint].width > maxGlyphWidth)
+				maxGlyphWidth = glyphImages[codepoint].width;
+
+			totalWidth += glyphImages[codepoint].width + int(2 * font.GlyphPadding);
+		}
+		int paddedFontSize = int(effectivefontSize + 2 * font.GlyphPadding);
+		// No need for a so-conservative atlas generation
+		float totalArea = totalWidth * paddedFontSize * 1.2f;
+		float imageMinSize = sqrtf(totalArea);
+		int imageSize = (int)powf(2, ceilf(logf(imageMinSize) / logf(2)));
+
+		if (totalArea < ((imageSize * imageSize) / 2))
+		{
+			fontAtlas.width = imageSize;    // Atlas bitmap width
+			fontAtlas.height = imageSize / 2; // Atlas bitmap height
+		}
+		else
+		{
+			fontAtlas.width = imageSize;   // Atlas bitmap width
+			fontAtlas.height = imageSize;  // Atlas bitmap height
+		}
+	}
 	fontAtlas.data = (unsigned char*)MemAlloc(fontAtlas.width * fontAtlas.height * 2);   // Create a bitmap to store characters (8 bpp)
 	fontAtlas.format = PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA;
 	fontAtlas.mipmaps = 1;
@@ -841,9 +890,9 @@ bool rltAddGlpyhToFont(rltFont* font, int codepoint, Image& glpyhImage, const Ve
 
 	auto& lastRect = font->Ranges.back().Glyphs.back().SourceRect;
 
-    Rectangle imageSourceRect = sourceRect;
-    if (imageSourceRect.width == 0)
-        imageSourceRect = Rectangle{ 0,0, float(glpyhImage.width), float(glpyhImage.height) };
+	Rectangle imageSourceRect = sourceRect;
+	if (imageSourceRect.width == 0)
+		imageSourceRect = Rectangle{ 0,0, float(glpyhImage.width), float(glpyhImage.height) };
 
 
 	Rectangle nextSourceRect = { font->LastSourceRectX + lastRect.width + font->GlyphPadding , lastRect.y, float(imageSourceRect.width), float(imageSourceRect.height) };
@@ -859,13 +908,13 @@ bool rltAddGlpyhToFont(rltFont* font, int codepoint, Image& glpyhImage, const Ve
 
 		ImageResizeCanvas(&bitmap, bitmap.width, bitmap.height * 2, 0, 0, BLANK);
 		font->Texture = LoadTextureFromImage(bitmap);
-	
+
 		UnloadImage(bitmap);
 
-        if (!GlyphLocationIsValid(font, nextSourceRect))
-        {
+		if (!GlyphLocationIsValid(font, nextSourceRect))
+		{
 			return false;
-        }
+		}
 	}
 
 	Image bitmap = LoadImageFromTexture(font->Texture);
@@ -944,7 +993,7 @@ void rltMergeGlypRange(rltFont* destination, const rltFont* source, rltGlyphSet&
 	if (!destination || !source || glyphSet.empty())
 		return;
 
-    Image bitmap = LoadImageFromTexture(source->Texture);
+	Image bitmap = LoadImageFromTexture(source->Texture);
 
 	for (auto codepoint : glyphSet)
 	{
