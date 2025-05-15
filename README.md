@@ -39,4 +39,4 @@ You must specify all 4 components of the HTML color, including the alpha
 
 # Todo
 * Cache multiple sizes of glyph in the same atlas?
-![image](https://raw.githubusercontent.com/JeffM2501/rlText/refs/heads/main/demo.gif)
+![image](https://raw.githubusercontent.com/raylib-extras/rlTextLib/refs/heads/main/demo.gif)
