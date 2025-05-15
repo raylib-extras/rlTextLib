@@ -409,7 +409,7 @@ rltFont rltLoadFontTTFMemory(const void* data, size_t dataSize, float fontSize, 
 	std::map<int, Rectangle> glyphRects;
 
 	// Calculate image size based on total glyph width and glyph row count
-	constexpr bool useMaxWidthAtlas = true;
+	constexpr bool useMaxWidthAtlas = false;
 
 	if (useMaxWidthAtlas)
 	{
@@ -420,7 +420,7 @@ rltFont rltLoadFontTTFMemory(const void* data, size_t dataSize, float fontSize, 
 
 		for (auto& codepoint : *setTouse)
 		{
-			int thisItemBottom = y + glyphImages[codepoint].height + font.GlyphPadding;
+			int thisItemBottom = y + glyphImages[codepoint].height + (font.GlyphPadding * 2);
 
 			if (thisItemBottom > fontAtlas.height)
 				fontAtlas.height = thisItemBottom;
@@ -430,7 +430,7 @@ rltFont rltLoadFontTTFMemory(const void* data, size_t dataSize, float fontSize, 
 			{
 				x = font.GlyphPadding;
 				y = fontAtlas.height;
-				fontAtlas.height = y + glyphImages[codepoint].height + font.GlyphPadding;
+				fontAtlas.height = y + glyphImages[codepoint].height + (font.GlyphPadding * 2);
 			}
 		}
 
