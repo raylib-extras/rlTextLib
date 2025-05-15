@@ -1,9 +1,7 @@
 ﻿/*
-Raylib example file.
-This is an example main file for a simple raylib project.
-Use this as a starting point or replace it with your code.
+rlTextLib example
 
--- Copyright (c) 2020-2024 Jeffery Myers
+-- Copyright (c) 2025 Jeffery Myers
 --
 --This software is provided "as-is", without any express or implied warranty. In no event
 --will the authors be held liable for any damages arising from the use of this software.
@@ -59,14 +57,14 @@ void GameInit()
 
 	// add a custom glyph to the font
 	Image logo = LoadImage("resources/raylib_logo.png");
-	ImageResize(&logo, fontSize, fontSize);
+	ImageResize(&logo, int(fontSize), int(fontSize));
 
 	int codePointSize = 0;
 	rltAddGlpyhToFont(&ttfFont, GetCodepoint(u8"😊", &codePointSize), logo);
 
-	oldFont = LoadFontEx("resources/Vera.ttf", fontSize, nullptr, 0);
+	oldFont = LoadFontEx("resources/Vera.ttf", int(fontSize), nullptr, 0);
 
-	oldFontScaled = LoadFontEx("resources/Vera.ttf", fontSize * GetWindowScaleDPI().y, nullptr, 0);
+	oldFontScaled = LoadFontEx("resources/Vera.ttf", int(fontSize * GetWindowScaleDPI().y), nullptr, 0);
 }
 
 void GameCleanup()
@@ -98,7 +96,7 @@ void GameDraw()
 	rltDrawText(TextNewlines, fontSize, Vector2{ 10, 280 }, WHITE, &ttfFont);
 
 	rltDrawText("New Font Wrapped", 20, Vector2{ 10,380 }, WHITE);
-	rltDrawTextWrapped(Text, fontSize, Vector2{ 10, 400 }, GetScreenWidth(), WHITE, &ttfFont);
+	rltDrawTextWrapped(Text, fontSize, Vector2{ 10, 400 }, float(GetScreenWidth()), WHITE, &ttfFont);
 
 
 

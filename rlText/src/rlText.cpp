@@ -1,9 +1,7 @@
 /*
-Raylib example file.
-This is an example main file for a simple raylib project.
-Use this as a starting point or replace it with your code.
+rlTextLib
 
--- Copyright (c) 2020-2024 Jeffery Myers
+-- Copyright (c) 2025 Jeffery Myers
 --
 --This software is provided "as-is", without any express or implied warranty. In no event
 --will the authors be held liable for any damages arising from the use of this software.
@@ -212,7 +210,8 @@ void LoadDefaultFont()
 			currentPosX = testPosX;
 		}
 	}
-	DefaultFont.LowestSourceRect = float(imFont.height);
+	DefaultFont.NextGlyphOrigin.x = range.Glyphs[glyphCount-1].SourceRect.x + range.Glyphs[glyphCount - 1].SourceRect.width;
+	DefaultFont.NextGlyphOrigin.y = range.Glyphs[glyphCount - 1].SourceRect.y;
 	UnloadImage(imFont);
 }
 
@@ -409,65 +408,49 @@ rltFont rltLoadFontTTFMemory(const void* data, size_t dataSize, float fontSize, 
 	std::map<int, Rectangle> glyphRects;
 
 	// Calculate image size based on total glyph width and glyph row count
-	constexpr bool useMaxWidthAtlas = false;
+	constexpr bool useMaxWidthAtlas = true;
+
+
+    Rectangle invalidRect = { font.GlyphPadding, font.GlyphPadding , effectivefontSize, effectivefontSize };
+
 
 	if (useMaxWidthAtlas)
 	{
 		fontAtlas.width = MaxAtlasWidth;
 		fontAtlas.height = 0;
-		int y = font.GlyphPadding;
-		int x = font.GlyphPadding * 2 + effectivefontSize; // leave some room for the unknown glyph
+		float y = font.GlyphPadding;
+		float x = font.GlyphPadding * 2 + effectivefontSize; // leave some room for the unknown glyph
 
-		for (auto& codepoint : *setTouse)
+		for (auto& range : font.Ranges)
 		{
-			int thisItemBottom = y + glyphImages[codepoint].height + (font.GlyphPadding * 2);
-
-			if (thisItemBottom > fontAtlas.height)
-				fontAtlas.height = thisItemBottom;
-
-			x += glyphImages[codepoint].width + font.GlyphPadding;
-			if (x > MaxAtlasWidth)
+			for (auto& glyphInfo : range.Glyphs)
 			{
-				x = font.GlyphPadding;
-				y = fontAtlas.height;
-				fontAtlas.height = y + glyphImages[codepoint].height + (font.GlyphPadding * 2);
+				int codepoint = glyphInfo.Value;
+
+				x += float(glyphImages[codepoint].width) + font.GlyphPadding;
+				if (x > MaxAtlasWidth)
+				{
+					x = font.GlyphPadding;
+					y = float(fontAtlas.height);
+					fontAtlas.height = int(y + glyphImages[codepoint].height + (font.GlyphPadding * 2));
+				}
+
+				glyphInfo.SourceRect.x = x - glyphImages[codepoint].width;
+                glyphInfo.SourceRect.y = y;
+				glyphInfo.SourceRect.width = float(glyphImages[codepoint].width);
+				glyphInfo.SourceRect.height = float(glyphImages[codepoint].height);
+
+                if (fontAtlas.height < glyphInfo.SourceRect.y + glyphInfo.SourceRect.height + font.GlyphPadding)
+                    fontAtlas.height = int(glyphInfo.SourceRect.y + glyphInfo.SourceRect.height + font.GlyphPadding);
+
+				font.NextGlyphOrigin.x = glyphInfo.SourceRect.x + glyphInfo.SourceRect.width + font.GlyphPadding;
+                font.NextGlyphOrigin.y = glyphInfo.SourceRect.y;
 			}
 		}
 
-		fontAtlas.height = pow(2, ceil(log(fontAtlas.height) / log(2)));
+		fontAtlas.height = int(powf(2, ceilf(logf(float(fontAtlas.height)) / logf(2))));
 	}
-	else
-	{
-		int totalWidth = 0;
-		int maxGlyphWidth = 0;
-
-		for (auto& codepoint : *setTouse)
-		{
-			if (glyphImages.find(codepoint) == glyphImages.end())
-				continue;
-
-			if (glyphImages[codepoint].width > maxGlyphWidth)
-				maxGlyphWidth = glyphImages[codepoint].width;
-
-			totalWidth += glyphImages[codepoint].width + int(2 * font.GlyphPadding);
-		}
-		int paddedFontSize = int(effectivefontSize + 2 * font.GlyphPadding);
-		// No need for a so-conservative atlas generation
-		float totalArea = totalWidth * paddedFontSize * 1.2f;
-		float imageMinSize = sqrtf(totalArea);
-		int imageSize = (int)powf(2, ceilf(logf(imageMinSize) / logf(2)));
-
-		if (totalArea < ((imageSize * imageSize) / 2))
-		{
-			fontAtlas.width = imageSize;    // Atlas bitmap width
-			fontAtlas.height = imageSize / 2; // Atlas bitmap height
-		}
-		else
-		{
-			fontAtlas.width = imageSize;   // Atlas bitmap width
-			fontAtlas.height = imageSize;  // Atlas bitmap height
-		}
-	}
+	
 	fontAtlas.data = (unsigned char*)MemAlloc(fontAtlas.width * fontAtlas.height * 2);   // Create a bitmap to store characters (8 bpp)
 	fontAtlas.format = PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA;
 	fontAtlas.mipmaps = 1;
@@ -475,69 +458,42 @@ rltFont rltLoadFontTTFMemory(const void* data, size_t dataSize, float fontSize, 
 	//fill it with white
 	memset(fontAtlas.data, 0, fontAtlas.width * fontAtlas.height * 2);
 
-	int offsetX = int(font.GlyphPadding);
-	int offsetY = int(font.GlyphPadding);
-
-	// NOTE: Using simple packaging, one char after another
-	for (auto& range : font.Ranges)
+	if (useMaxWidthAtlas)
 	{
-		for (auto& glyphInfo : range.Glyphs)
+		for (auto& range : font.Ranges)
 		{
-			auto& image = glyphImages[glyphInfo.Value];
-
-			// Check remaining space for font.GlyphPadding
-			if (offsetX >= (fontAtlas.width - image.width - 2 * font.GlyphPadding))
+			for (auto& glyphInfo : range.Glyphs)
 			{
-				offsetX = int(font.GlyphPadding);
+				auto& image = glyphImages[glyphInfo.Value];
 
-				// NOTE: Be careful on offsetY for SDF fonts, by default SDF
-				// use an internal padding of 4 pixels, it means char rectangle
-				// height is bigger than fontSize, it could be up to (fontSize + 8)
-				offsetY += int(effectivefontSize + 2 * font.GlyphPadding);
+                // copy the image to just the alpha
+                for (size_t y = 0; y < image.height; y++)
+                {
+                    for (size_t x = 0; x < image.width; x++)
+                    {
+                        size_t sourceIndex = y * image.width + x;
+                        size_t destIndex = ((int(glyphInfo.SourceRect.y) + y) * fontAtlas.width) + (int(glyphInfo.SourceRect.x) + x);
+
+                        unsigned char* sourcePixel = ((unsigned char*)image.data) + sourceIndex;
+                        unsigned char* destPixel = ((unsigned char*)fontAtlas.data) + (destIndex * 2);
+
+                        // set the color channel to full white if the alpha is not 0, this way the alpha has a full color to blend with, not grays
+                        if (*sourcePixel > 0)
+                            *destPixel = 255;
+                        else
+                            *destPixel = 0;
+
+                        // set the alpha based on the glyph
+                        destPixel++;
+                        *destPixel = *sourcePixel;
+                    }
+                }
 			}
-
-			glyphInfo.SourceRect = { float(offsetX), float(offsetY), float(image.width), float(image.height) };
-
-			if (glyphInfo.SourceRect.y + glyphInfo.SourceRect.height > font.LowestSourceRect)
-				font.LowestSourceRect = glyphInfo.SourceRect.y + glyphInfo.SourceRect.height;
-
-			font.LastSourceRectX = glyphInfo.SourceRect.x + glyphInfo.SourceRect.width;
-
-			// copy the image to just the alpha
-			for (size_t y = 0; y < image.height; y++)
-			{
-				for (size_t x = 0; x < image.width; x++)
-				{
-					size_t sourceIndex = y * image.width + x;
-					size_t destIndex = (offsetY + y) * fontAtlas.width + (offsetX + x);
-
-					unsigned char* sourcePixel = ((unsigned char*)image.data) + sourceIndex;
-					unsigned char* destPixel = ((unsigned char*)fontAtlas.data) + (destIndex * 2);
-
-					// set the color channel to full white if the alpha is not 0, this way the alpha has a full color to blend with, not grays
-					if (*sourcePixel > 0)
-						*destPixel = 255;
-					else
-						*destPixel = 0;
-
-					// set the alpha based on the glyph
-					destPixel++;
-					*destPixel = *sourcePixel;
-				}
-			}
-
-			UnloadImage(image);
-			image.data = nullptr;
-
-			// Move atlas position X for next character drawing
-			offsetX += int(glyphInfo.SourceRect.width + (2 * font.GlyphPadding));
 		}
 	}
 
 	int rectSize = 3;
-	ImageDrawRectangle(&fontAtlas, fontAtlas.width - rectSize, fontAtlas.height - rectSize, rectSize, rectSize, WHITE);
-
-	Rectangle invalidRect = { fontAtlas.width - rectSize - effectivefontSize - font.GlyphPadding, fontAtlas.height - effectivefontSize - font.GlyphPadding , effectivefontSize, effectivefontSize };
+	ImageDrawRectangle(&fontAtlas, 0, 0, rectSize, rectSize, WHITE);
 
 	ImageDrawRectangleLines(&fontAtlas, invalidRect, 2, WHITE);
 
@@ -863,22 +819,7 @@ bool GlyphLocationIsValid(rltFont* font, Rectangle& rectangle)
 
 	// we are over the right side
 	if (right > font->Texture.width)
-	{
-		// move down to the left
-		rectangle.y = font->LowestSourceRect + font->GlyphPadding;
-		rectangle.x = font->GlyphPadding;
-
-		// we are out of room
-		if (rectangle.y + rectangle.height > font->Texture.height)
-			return false;
-
-		// it's too big to even fit
-		if (rectangle.x + rectangle.width + font->GlyphPadding > font->Texture.width)
-			return false;
-
-		// it can fit
-		return true;
-	}
+		return false;
 
 	return true;
 }
@@ -895,7 +836,7 @@ bool rltAddGlpyhToFont(rltFont* font, int codepoint, Image& glpyhImage, const Ve
 		imageSourceRect = Rectangle{ 0,0, float(glpyhImage.width), float(glpyhImage.height) };
 
 
-	Rectangle nextSourceRect = { font->LastSourceRectX + lastRect.width + font->GlyphPadding , lastRect.y, float(imageSourceRect.width), float(imageSourceRect.height) };
+	Rectangle nextSourceRect = { font->NextGlyphOrigin.x , font->NextGlyphOrigin.y, float(imageSourceRect.width), float(imageSourceRect.height) };
 
 	if (!GlyphLocationIsValid(font, nextSourceRect))
 	{
@@ -917,6 +858,7 @@ bool rltAddGlpyhToFont(rltFont* font, int codepoint, Image& glpyhImage, const Ve
 		}
 	}
 
+
 	Image bitmap = LoadImageFromTexture(font->Texture);
 
 	bool newTexture = false;
@@ -934,10 +876,8 @@ bool rltAddGlpyhToFont(rltFont* font, int codepoint, Image& glpyhImage, const Ve
 	newGlyph.DestSize.x = newGlyph.SourceRect.width;
 	newGlyph.DestSize.y = newGlyph.SourceRect.height;
 
-	if (nextSourceRect.y + nextSourceRect.height > font->LowestSourceRect)
-		font->LowestSourceRect = nextSourceRect.y + nextSourceRect.height;
-
-	font->LastSourceRectX = nextSourceRect.x + nextSourceRect.width;
+	font->NextGlyphOrigin.x = nextSourceRect.x + nextSourceRect.width + font->GlyphPadding;
+    font->NextGlyphOrigin.y = nextSourceRect.y;
 
 	newGlyph.Offset = offeset;
 	newGlyph.NextCharacterAdvance = advance;

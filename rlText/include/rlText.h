@@ -1,9 +1,7 @@
 /*
-Raylib example file.
-This is an example main file for a simple raylib project.
-Use this as a starting point or replace it with your code.
+rlTextLib
 
--- Copyright (c) 2020-2024 Jeffery Myers
+-- Copyright (c) 2025 Jeffery Myers
 --
 --This software is provided "as-is", without any express or implied warranty. In no event
 --will the authors be held liable for any damages arising from the use of this software.
@@ -99,8 +97,8 @@ struct rltFont
 	rltGlyphInfo InvalidGlyph;
 
 	Texture2D Texture = { 0 };
-	float LowestSourceRect = 0;
-	float LastSourceRectX = 0;
+	
+	Vector2 NextGlyphOrigin = { 0,0 };
 };
 
 const rltFont& rltGetDefaultFont();

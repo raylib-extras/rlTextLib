@@ -1,9 +1,7 @@
 ﻿/*
-Raylib example file.
-This is an example main file for a simple raylib project.
-Use this as a starting point or replace it with your code.
+rlTextLib example
 
--- Copyright (c) 2020-2024 Jeffery Myers
+-- Copyright (c) 2025 Jeffery Myers
 --
 --This software is provided "as-is", without any express or implied warranty. In no event
 --will the authors be held liable for any damages arising from the use of this software.
@@ -54,18 +52,18 @@ void GameInit()
 
 	// add a custom glyph to the font
 	Image logo = LoadImage("resources/raylib_logo.png");
-	ImageResize(&logo, fontSize, fontSize);
+	ImageResize(&logo, int(fontSize), int(fontSize));
 	int codePointSize = 0;
 	rltAddGlpyhToFont(&ttfFont, GetCodepoint(u8"😊", &codePointSize), logo);
 	UnloadImage(logo);
 
 	// add custom color glpyh to the font
 	Image colorEmoji = LoadImage("resources/face-with-tears-of-joy_1f602.png");
-	ImageResize(&colorEmoji, fontSize, fontSize);
+	ImageResize(&colorEmoji, int(fontSize), int(fontSize));
 	rltAddGlpyhToFont(&ttfFont, GetCodepoint(u8"😂", &codePointSize), colorEmoji);
 	UnloadImage(colorEmoji);
 
-	renderTexture = LoadRenderTexture(400 * GetWindowScaleDPI().x, 400 * GetWindowScaleDPI().y);
+	renderTexture = LoadRenderTexture(int(400 * GetWindowScaleDPI().x),int(400 * GetWindowScaleDPI().y));
 }
 
 void GameCleanup()
@@ -90,7 +88,7 @@ void GameDraw()
 
 	DrawRectangle(0, 0, 10, 10, RED);
 
-	float y = 200 + sinf(GetTime() / 2) * 70;
+	float y = 200 + sinf(float(GetTime() / 2)) * 70;
 
 	rltDrawText(TextFormat("I am in the render texture at Y %0.0f", y), fontSize * GetWindowScaleDPI().y, Vector2{ 20, y }, WHITE, &ttfFont);
 
@@ -103,7 +101,7 @@ void GameDraw()
 	DrawRectangleGradientV(0, 0, GetScreenWidth(), GetScreenHeight(), DARKGREEN, BLACK);
 
 	// Text with colors
-	rltDrawText(u8"-A Hello Raylib \a#FF0000FFI \a#FFFF00FFam \a#FF00FFFFDrawing \a#00FF00FFIn Color!!!!", fontSize, Vector2{ 10,10 }, WHITE, &ttfFont);
+	rltDrawText(u8"Hello Raylib \a#FF0000FFI \a#FFFF00FFam \a#FF00FFFFDrawing \a#00FF00FFIn Color!!!! -A", fontSize, Vector2{ 10,10 }, WHITE, &ttfFont);
 
 	// Text with alignment
 	rltDrawTextJustified(u8"I am Centered \a#FFFFFFFF😊", fontSize, Vector2{ GetScreenWidth() * 0.5f, fontSize * 2 }, YELLOW, rltAllignment::Center, &ttfFont);
@@ -120,7 +118,7 @@ void GameDraw()
 	// Text fit to a width with word wrap
 	float width = 350 + sinf(float(GetTime() / 5)) * 100;
 	rltDrawTextWrapped(u8"😂 This is text fit to a width. I am more Text How do you like me now?... how many lines does this come out to?  who knows? Here are some Unicode characters to hold you over ÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒ\n\a#FFFFFFFF😊💩", fontSize, Vector2{ 10,fontSize * 7 }, width, RAYWHITE, &ttfFont);
-	DrawLine(int(width), fontSize * 7, int(width), fontSize * 14, SKYBLUE);
+	DrawLine(int(width), int(fontSize * 7), int(width), int(fontSize * 14), SKYBLUE);
 
 	// font atlas with glyph rects
 	Vector2 offset = { 500,fontSize * 10 };
