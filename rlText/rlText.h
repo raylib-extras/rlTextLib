@@ -174,7 +174,6 @@ rlTextLib
 
 #include "raymath.h"
 
-#include <map>
 #include "external/glad.h"
 
 #include "external/stb_rect_pack.h"     // Required for: ttf/bdf font rectangles packaging
@@ -432,7 +431,7 @@ rltFont rltLoadFontTTFMemory(const void* data, size_t dataSize, float fontSize, 
     if (!stbtt_InitFont(&fontInfo, (unsigned char*)data, 0))
         return font;
 
-    std::map<int, int> indexToCodepoint;
+    std::unordered_map<int, int> indexToCodepoint;
 
     float rasterScale = 1.0f;
     // if we are auto scaling for high DPI, load the font at the scaled size, so that the pixel map is the right size
@@ -454,7 +453,7 @@ rltFont rltLoadFontTTFMemory(const void* data, size_t dataSize, float fontSize, 
 
     rltGlyphRange* currentRange = nullptr;
 
-    std::map<int, Image> glyphImages;
+    std::unordered_map<int, Image> glyphImages;
 
     for (auto& codepoint : *setTouse)
     {
@@ -555,7 +554,7 @@ rltFont rltLoadFontTTFMemory(const void* data, size_t dataSize, float fontSize, 
 
     Image fontAtlas = { 0 };
 
-    std::map<int, Rectangle> glyphRects;
+    std::unordered_map<int, Rectangle> glyphRects;
 
     // Calculate image size based on total glyph width and glyph row count
     constexpr bool useMaxWidthAtlas = true;
@@ -1007,7 +1006,6 @@ bool rltAddGlpyhToFont(rltFont* font, int codepoint, Image& glpyhImage, const Ve
             return false;
         }
     }
-
 
     Image bitmap = LoadImageFromTexture(font->Texture);
 
