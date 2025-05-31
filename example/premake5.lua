@@ -37,7 +37,7 @@ project (baseName)
         ["Source Files/*"] = {"src/**.c", "src/**.cpp","**.c", "**.cpp"},
         ["Application Resource Files/*"] = {"src/**.rc", "src/**.ico"},
     }
-    files {"**.c", "**.cpp", "**.h", "**.hpp"}
+    files {"**.c", "**.cpp", "**.h", "**.hpp", "../rlText/**.h"}
 
     filter "system:windows"
         files {"src/**.rc", "src/**.ico"}
@@ -53,7 +53,6 @@ project (baseName)
     includedirs { "./" }
     includedirs { "src" }
     includedirs { "include" }
-    
+     includedirs { "../rlText" }
     link_raylib()
-    link_to("rlText")
 -- To link to a lib use link_to("LIB_FOLDER_NAME")

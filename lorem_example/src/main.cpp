@@ -24,6 +24,8 @@ rlTextLib example
 #include "raymath.h"
 
 #include "game.h"   // an external header in this project
+
+#define RL_TEXT_IMPLEMENTATION
 #include "rlText.h"	// an external header in the static lib project
 
 #include "rlgl.h"

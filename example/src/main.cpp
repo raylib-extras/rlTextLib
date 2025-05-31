@@ -24,6 +24,8 @@ rlTextLib example
 #include "raymath.h"
 
 #include "game.h"   // an external header in this project
+
+#define RL_TEXT_IMPLEMENTATION
 #include "rlText.h"	// an external header in the static lib project
 
 #include "rlgl.h"
@@ -98,7 +100,7 @@ void GameDraw()
 	BeginDrawing();
 	ClearBackground(BLACK);
 
-	DrawRectangleGradientV(0, 0, GetScreenWidth(), GetScreenHeight(), DARKGREEN, BLACK);
+	//DrawRectangleGradientV(0, 0, GetScreenWidth(), GetScreenHeight(), DARKGREEN, BLACK);
 
 	// Text with colors
 	rltDrawText(u8"Hello Raylib \a#FF0000FFI \a#FFFF00FFam \a#FF00FFFFDrawing \a#00FF00FFIn Color!!!! -A", fontSize, Vector2{ 10,10 }, WHITE, &ttfFont);

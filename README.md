@@ -15,10 +15,13 @@ rlText is a library that contains an alternate font rendering system for raylib,
 * Atlas resizising
 
 # Building
-This library uses Game-premake from
+rlText is a single header library, just add rlText.h to your project and add #define RL_TEXT_IMPLEMENTATION before you include it in your cpp file.
+
+
+The examples use Game-premake from
 https://github.com/raylib-extras/game-premake/
 
-You can run the batch files on windows or premake5 gmake2 on other OSs to generate makefiles or visual studio proejcts. The library and it's examples are also setup for use in vscode, simply open the folder in vscode and run the build task.
+You can run the batch files on windows or premake5 gmake2 on other OSs to generate makefiles or visual studio proejcts for the examples, but it is not required to use the lib. The library and it's examples are also setup for use in vscode, simply open the folder in vscode and run the build task.
 
 # Example app
 The example folder contains a simple use case of the library.
