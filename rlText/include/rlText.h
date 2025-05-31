@@ -25,7 +25,7 @@ rlTextLib
 #include "raymath.h"
 
 #include <set>
-#include <map>
+#include <unordered_map>
 #include <vector>
 #include <string>
 
@@ -76,7 +76,7 @@ struct rltGlyphInfo
 	Rectangle   SourceRect = { 0,0,0,0 };
 	Vector2		DestSize = { 0,0 };
 
-	std::map<int, float> KerningInfo;
+	std::unordered_map<int, float> KerningInfo;
 };
 
 struct rltGlyphRange
