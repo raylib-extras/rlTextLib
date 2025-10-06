@@ -1,9 +1,9 @@
-# rlText an enhaned text renderng systems for raylib
+# rlText an enhanced text rendering systems for raylib
 rlText is a library that contains an alternate font rendering system for raylib, that supports some new features not found in the core system
 
 # Features
 * Better support for HighDPI displays and automatic display scaling
-* Allingment (left, right center)
+* Alignment (left, right center)
 * Text Wrapping
 * Better handling of glpyh ranges
 * Custom glyphs
@@ -12,7 +12,7 @@ rlText is a library that contains an alternate font rendering system for raylib,
 * Flip Y for use with render textures
 * Merge glyphs from other fonts
 * Add glyph ranges as needed
-* Atlas resizising
+* Atlas resizing
 
 # Building
 rlText is a single header library, just add rlText.h to your project and add #define RL_TEXT_IMPLEMENTATION before you include it in your cpp file.
