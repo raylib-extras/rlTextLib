@@ -1,5 +1,5 @@
-# rlText an enhanced text rendering systems for raylib
-rlText is a library that contains an alternate font rendering system for raylib, that supports some new features not found in the core system
+# rlText an enhanced text rendering system for raylib
+`rlText` is a library that contains an alternate font rendering system for raylib, that supports some new features not found in the core system
 
 # Features
 * Better support for HighDPI displays and automatic display scaling
