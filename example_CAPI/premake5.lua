@@ -55,5 +55,5 @@ project (baseName)
     includedirs { "include" }
     includedirs { "../rlText" }
     link_raylib()
-
+    links ("rlTextLibC")
 -- To link to a lib use link_to("LIB_FOLDER_NAME")

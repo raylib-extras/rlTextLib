@@ -17,43 +17,18 @@
 
 baseName = path.getbasename(os.getcwd());
 
-project (baseName)
-    kind "ConsoleApp"
+project ("rlTextLibC")
+    kind "StaticLib"
     location "./"
     targetdir "../bin/%{cfg.buildcfg}"
 
-    filter "action:vs*"
-        debugdir "$(SolutionDir)"
-
-    filter {"action:vs*", "configurations:Release"}
-        kind "WindowedApp"
-        entrypoint "mainCRTStartup"
-
-    filter{}
-
     vpaths 
     {
-        ["Header Files/*"] = { "include/**.h",  "include/**.hpp", "src/**.h", "src/**.hpp", "**.h", "**.hpp"},
-        ["Source Files/*"] = {"src/**.c", "src/**.cpp","**.c", "**.cpp"},
-        ["Application Resource Files/*"] = {"src/**.rc", "src/**.ico"},
+        ["Header Files/*"] = { "include/**.h", "include/**.hpp", "**.h", "**.hpp"},
+        ["Source Files/*"] = { "src/**.cpp", "src/**.c", "**.cpp","**.c"},
     }
-    files {"**.c", "**.cpp", "**.h", "**.hpp"}
+    files {"**.hpp", "**.h", "**.cpp","**.c"}
 
-    filter "system:windows"
-        files {"src/**.rc", "src/**.ico"}
-        resincludedirs { "src/**" }
-    filter{}
-
-    filter "files:**.ico"
-        buildaction "Embed"
-		
-    filter{}
-
-  
     includedirs { "./" }
-    includedirs { "src" }
-    includedirs { "include" }
-    includedirs { "../rlText" }
-    link_raylib()
 
--- To link to a lib use link_to("LIB_FOLDER_NAME")
+    include_raylib()
