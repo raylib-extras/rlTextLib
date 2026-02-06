@@ -45,7 +45,7 @@ extern "C" {            // Prevents name mangling of functions
     void rltcGetStandardGlyphSet(rltcGlyphSet glyphSet);
     void rltcAddRangeToGlyphSet(int start, int end, rltcGlyphSet glyphSet);
     void rltcAddGlyphSetFromString(const char* text, rltcGlyphSet glyphSet);
-    void rltcAddGlyphSetFromStringWithLenght(const char* text, size_t lenght, rltcGlyphSet glyphSet);
+    void rltcAddGlyphSetFromStringWithLength(const char* text, size_t length, rltcGlyphSet glyphSet);
 
     rltcFont rltcLoadFontTTF(const char* filePath, float fontSize, rltcGlyphSet glyphSet, float* defaultSpacing);
     rltcFont rltcLoadFontTTFMemory(const void* data, size_t dataSize, float fontSize, rltcGlyphSet glyphSet, float* defaultSpacing);
@@ -60,7 +60,7 @@ extern "C" {            // Prevents name mangling of functions
     void rltcMergeGlypRange(rltcFont destination, rltcFont source, rltcGlyphSet glyphSet);
 
     void rltcDrawText(const char* text, float size, Vector2 position, Color tint, rltcFont font);
-	void rltcDrawTextLen(const char* text, size_t lenght, float size, Vector2 position, Color tint, rltcFont font);
+	void rltcDrawTextLength(const char* text, size_t length, float size, Vector2 position, Color tint, rltcFont font);
 
     void rltcSetTextYFlip(bool flip);
 
@@ -72,13 +72,13 @@ extern "C" {            // Prevents name mangling of functions
     }rltcAllignment;
 
     void rltcDrawTextJustified(const char* text, float size, Vector2 position, Color tint, rltcAllignment allignment, rltcFont font);
-	void rltcDrawTextLenJustified(const char* text, size_t lenght, float size, Vector2 position, Color tint, rltcAllignment allignment, rltcFont font);
+	void rltcDrawTextLenghtJustified(const char* text, size_t length, float size, Vector2 position, Color tint, rltcAllignment allignment, rltcFont font);
 
     float rltcDrawTextWrapped(const char* text, float size, Vector2 position, float width, Color tint, rltcFont* font);
-	float rltcDrawTextLenghtWrapped(const char* text, size_t lenght, float size, Vector2 position, float width, Color tint, rltcFont* font);
+	float rltcDrawTextLengthWrapped(const char* text, size_t length, float size, Vector2 position, float width, Color tint, rltcFont* font);
 
     Vector2 rltMeasureText(const char* text, float size, rltcFont font);
-    Vector2 rltMeasureTextLenght(const char* text, size_t lenght, float size, rltcFont font);
+    Vector2 rltMeasureTextLength(const char* text, size_t length, float size, rltcFont font);
 
 #if defined(__cplusplus)
 }           // Prevents name mangling of functions

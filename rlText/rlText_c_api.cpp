@@ -30,9 +30,9 @@ void rltcAddRangeToGlyphSet(int start, int end, rltcGlyphSet glyphSet)
     rltAddRangeToGlyphSet(start, end, *((rltGlyphSet*)glyphSet));
 }
 
-void rltcAddGlyphSetFromStringWithLenght(const char* text, size_t lenght, rltcGlyphSet glyphSet)
+void rltcAddGlyphSetFromStringWithLength(const char* text, size_t length, rltcGlyphSet glyphSet)
 {
-    rltAddGlyphSetFromString(std::string_view(text, lenght), *(rltGlyphSet*)glyphSet);
+    rltAddGlyphSetFromString(std::string_view(text, length), *(rltGlyphSet*)glyphSet);
 }
 
 void rltcAddGlyphSetFromString(const char* text, rltcGlyphSet glyphSet)
@@ -86,9 +86,9 @@ void rltcDrawText(const char* text, float size, Vector2 position, Color tint, rl
     rltDrawText(std::string_view(text), size, position, tint, (rltFont*)font);
 }
 
-void rltcDrawTextLen(const char* text, size_t lenght, float size, Vector2 position, Color tint, rltcFont font)
+void rltcDrawTextLength(const char* text, size_t length, float size, Vector2 position, Color tint, rltcFont font)
 {
-    rltDrawText(std::string_view(text, lenght), size, position, tint, (rltFont*)font);
+    rltDrawText(std::string_view(text, length), size, position, tint, (rltFont*)font);
 }
 
 void rltcSetTextYFlip(bool flip)
@@ -114,7 +114,7 @@ void rltcDrawTextJustified(const char* text, float size, Vector2 position, Color
     rltDrawTextJustified(std::string_view(text), size, position, tint, align, (rltFont*)font);
 }
 
-void rltcDrawTextLenJustified(const char* text, size_t lenght, float size, Vector2 position, Color tint, rltcAllignment allignment, rltcFont font)
+void rltcDrawTextLengthJustified(const char* text, size_t length, float size, Vector2 position, Color tint, rltcAllignment allignment, rltcFont font)
 {
 	rltAllignment align = rltAllignment::Left;
 	switch (allignment)
@@ -129,7 +129,7 @@ void rltcDrawTextLenJustified(const char* text, size_t lenght, float size, Vecto
 		align = rltAllignment::Right;
 		break;
 	}
-	rltDrawTextJustified(std::string_view(text, lenght), size, position, tint, align, (rltFont*)font);
+	rltDrawTextJustified(std::string_view(text, length), size, position, tint, align, (rltFont*)font);
 }
 
 float rltcDrawTextWrapped(const char* text, float size, Vector2 position, float width, Color tint, rltcFont* font)
@@ -137,9 +137,9 @@ float rltcDrawTextWrapped(const char* text, float size, Vector2 position, float 
     return rltDrawTextWrapped(std::string_view(text), size, position, width, tint, (rltFont*)font);
 }
 
-float rltcDrawTextLenghtWrapped(const char* text, size_t lenght, float size, Vector2 position, float width, Color tint, rltcFont* font)
+float rltcDrawTextLengthWrapped(const char* text, size_t length, float size, Vector2 position, float width, Color tint, rltcFont* font)
 {
-    return rltDrawTextWrapped(std::string_view(text, lenght), size, position, width, tint, (rltFont*)font);
+    return rltDrawTextWrapped(std::string_view(text, length), size, position, width, tint, (rltFont*)font);
 }
 
 Vector2 rltMeasureText(const char* text, float size, rltcFont font)
@@ -147,7 +147,7 @@ Vector2 rltMeasureText(const char* text, float size, rltcFont font)
     return rltMeasureText(std::string_view(text), size, (rltFont*)font);
 }
 
-Vector2 rltMeasureTextLenght(const char* text, size_t lenght, float size, rltcFont font)
+Vector2 rltMeasureTextLength(const char* text, size_t length, float size, rltcFont font)
 {
-	return rltMeasureText(std::string_view(text, lenght), size, (rltFont*)font);
+	return rltMeasureText(std::string_view(text, length), size, (rltFont*)font);
 }
