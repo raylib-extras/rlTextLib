@@ -25,14 +25,13 @@ rlText is a **single header library for C++ **, just add `rlText.h` to your proj
 ## C
 rlText has a Pure C compatible API in `rlTextC.h` to your project and build the rlTextLibrary as a shared library and link it to your game
 
-
+# Examples
 The examples use Game-premake from
 https://github.com/raylib-extras/game-premake/
 
 You can run the batch files on Windows or `premake5 gmake2` on other OSs to generate makefiles or Visual Studio proejcts for the examples, but it is not required to use the lib. The library and it's examples are also setup for use in VSCode, simply open the folder in VSCode and run the build task.
 
-# Example app
-The example folder contains a simple use case of the library.
+The example folder contains simple use cases of the library.
 
 # Limitations
 This library currently has some limitations
