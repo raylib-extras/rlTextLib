@@ -15,11 +15,16 @@
 * Atlas resizising
 
 # Building
-rlText is a **single header library**, just add `rlText.h` to your project and add `#define RL_TEXT_IMPLEMENTATION` before you include it in your cpp file:
+## C++
+rlText is a **single header library for C++ **, just add `rlText.h` to your project and add `#define RL_TEXT_IMPLEMENTATION` before you include it in your cpp file:
 ```c
 #define RL_TEXT_IMPLEMENTATION
 #include "rlText.h"
 ```
+
+## C
+rlText has a Pure C compatible API in `rlTextC.h` to your project and build the rlTextLibrary as a shared library and link it to your game
+
 
 The examples use Game-premake from
 https://github.com/raylib-extras/game-premake/
@@ -34,8 +39,9 @@ This library currently has some limitations
 * TTF only, bitmap fonts are not supported
 * Grayscale rendering only
 
-# C++
+# C++ Use
 The library does use C++ but does not use any complex classes or templates. Only basic C++ features such as references and containers are used.
+A C compatible header and library are available if needed (see C building instructions above)
 
 # Color Codes
 The font drawing system uses \a as an escape code for color, simply provide \a then a HTML color code
