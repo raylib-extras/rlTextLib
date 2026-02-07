@@ -35,8 +35,7 @@ rltcFont ttfFont;
 
 Font rayFont = { 0 };
 
-float fontSize = 20;
-RenderTexture renderTexture = { 0 };
+float fontSize = 32;
 
 void GameInit()
 {
@@ -68,9 +67,6 @@ void GameInit()
 	ImageResize(&colorEmoji, (int)fontSize, (int)fontSize);
 	rltcAddGlpyhToFont(ttfFont, GetCodepoint(u8"😂", &codePointSize), colorEmoji, Vector2Zero(), 0, (Rectangle) { 0, 0, 0, 0 });
 	UnloadImage(colorEmoji);
-
-	renderTexture = LoadRenderTexture((int)(400 * GetWindowScaleDPI().x), (int)(400 * GetWindowScaleDPI().y));
-
 	rltcDestroyGlyphSet(fontSet);
 }
 
@@ -87,26 +83,16 @@ bool GameUpdate()
 	return true;
 }
 
+int CurrentCharacter = 1;
+float accumulator = 0;
+float timeStep = 1.0f / 10.0f;
+
 void GameDraw()
 {
-	// draw to a render texture but flip the text so we don't have to flip the render texture when we draw it.
-	rltcSetTextYFlip(true);
-	BeginTextureMode(renderTexture);
-	ClearBackground(BLANK);
-
-	DrawRectangle(0, 0, 10, 10, RED);
-
-	float y = 200 + sinf((float)GetTime() / 2) * 70;
-
-	rltcDrawText(TextFormat("I am in the render texture at Y %0.0f", y), fontSize * GetWindowScaleDPI().y, (Vector2){ 20, y }, WHITE, ttfFont);
-
-	EndTextureMode();
-	rltcSetTextYFlip(false);
-
 	BeginDrawing();
 	ClearBackground(BLACK);
 
-	DrawRectangleGradientV(0, 0, GetScreenWidth(), GetScreenHeight(), DARKGREEN, BLACK);
+	DrawRectangleGradientV(0, 0, GetScreenWidth(), GetScreenHeight(), DARKBLUE, BLACK);
 
 	// Text with colors
 	rltcDrawText("-A Hello Raylib \a#FF0000FFI \a#FFFF00FFam \a#FF00FFFFDrawing \a#00FF00FFIn Color!!!!", fontSize, (Vector2){ 10,10 }, WHITE, ttfFont);
@@ -124,9 +110,21 @@ void GameDraw()
 	DrawRectangleLinesEx(bounds, 1, ColorAlpha(BLUE, 0.5f));
 
 	// Text fit to a width with word wrap
-	float width = 350 + sinf((float)GetTime() / 5) * 100;
-	rltcDrawTextWrapped(u8"😂 This is text fit to a width. I am more Text How do you like me now?... how many lines does this come out to?  who knows? Here are some Unicode characters to hold you over ÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒ\n\a#FFFFFFFF😊💩", fontSize, (Vector2){ 10,fontSize * 7 }, width, RAYWHITE, ttfFont);
-	DrawLine((int)width, (int)(fontSize * 7), (int)width, (int)(fontSize * 14), SKYBLUE);
+	const char* longText = u8"😂 This is text fit to a width. I am more Text How do you like me now?... how many lines does this come out to?  who knows? Here are some Unicode characters to hold you over ÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒ\n\a#FFFFFFFF😊💩";
+
+	int len = strlen(longText);
+
+	accumulator += GetFrameTime();
+	while (accumulator >= timeStep)
+	{
+		accumulator -= timeStep;
+		if (CurrentCharacter < len)
+			CurrentCharacter++;
+		else
+			CurrentCharacter = 0;
+	}
+
+	rltcDrawTextLengthWrapped(longText, CurrentCharacter, fontSize, (Vector2){ 10,fontSize * 7 }, GetScreenWidth() - 20.0f, RAYWHITE, ttfFont);
 
 	EndDrawing();
 }

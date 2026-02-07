@@ -72,7 +72,7 @@ extern "C" {            // Prevents name mangling of functions
     }rltcAllignment;
 
     void rltcDrawTextJustified(const char* text, float size, Vector2 position, Color tint, rltcAllignment allignment, rltcFont font);
-	void rltcDrawTextLenghtJustified(const char* text, size_t length, float size, Vector2 position, Color tint, rltcAllignment allignment, rltcFont font);
+	void rltcDrawTextLengthJustified(const char* text, size_t length, float size, Vector2 position, Color tint, rltcAllignment allignment, rltcFont font);
 
     float rltcDrawTextWrapped(const char* text, float size, Vector2 position, float width, Color tint, rltcFont* font);
 	float rltcDrawTextLengthWrapped(const char* text, size_t length, float size, Vector2 position, float width, Color tint, rltcFont* font);
