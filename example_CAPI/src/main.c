@@ -30,6 +30,8 @@ Use this as a starting point or replace it with your code.
 
 #include "rlgl.h"
 
+#include <string.h>
+
 
 rltcFont ttfFont;
 
@@ -112,7 +114,7 @@ void GameDraw()
 	// Text fit to a width with word wrap
 	const char* longText = u8"😂 This is text fit to a width. I am more Text How do you like me now?... how many lines does this come out to?  who knows? Here are some Unicode characters to hold you over ÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒ\n\a#FFFFFFFF😊💩";
 
-	int len = strlen(longText);
+	size_t len = strlen(longText);
 
 	accumulator += GetFrameTime();
 	while (accumulator >= timeStep)

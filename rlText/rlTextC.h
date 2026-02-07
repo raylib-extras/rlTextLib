@@ -2,6 +2,8 @@
 
 #include "raylib.h"
 
+#include <stddef.h> // For size_t
+
 #if defined(__cplusplus)
 extern "C" {            // Prevents name mangling of functions
 #endif
