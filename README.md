@@ -16,14 +16,15 @@
 
 # Building
 ## C++
-rlText is a **single header library for C++ **, just add `rlText.h` to your project and add `#define RL_TEXT_IMPLEMENTATION` before you include it in your cpp file:
+rlText is a **single header library for C++ **, it has no additional .cpp files to build. just add `rlText.h` to your project and add `#define RL_TEXT_IMPLEMENTATION` before you include it in your cpp file:
 ```c
 #define RL_TEXT_IMPLEMENTATION
 #include "rlText.h"
 ```
+The header does have some dependencies on files in raylib, like raylib.h and stb headers, so the raylib headers (and external folder) must be available in your build path.
 
 ## C
-rlText has a Pure C compatible API in `rlTextC.h` to your project and build the rlTextLibrary as a shared library and link it to your game
+rlText has a Pure C compatible API in `rlTextC.h` to your project and build the rlTextLibrary as a shared library and link it to your game. The dependencies on raylib headers are the same 
 
 # Examples
 The examples use Game-premake from
