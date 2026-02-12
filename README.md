@@ -3,7 +3,7 @@
 
 # Features
 * Better support for HighDPI displays and automatic display scaling
-* Alignment (left, right center)
+* Alignment (left, right, center)
 * Text Wrapping
 * Better handling of glpyh ranges
 * Custom glyphs
@@ -12,7 +12,7 @@
 * Flip Y for use with render textures
 * Merge glyphs from other fonts
 * Add glyph ranges as needed
-* Atlas resizising
+* Atlas resizing
 
 # Building
 ## C++
