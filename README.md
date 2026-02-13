@@ -63,6 +63,8 @@ The font drawing system uses \a as an escape code for color, simply provide \a t
 This will swap to the red color after "\a#FF0000FF". The color state will stay untill you change it back to a specific color. Text will default to the tint color.
 You must specify all 4 components of the HTML color, including the alpha
 
-# Todo
-* Cache multiple sizes of glyph in the same atlas?
+# Demo
 ![image](https://raw.githubusercontent.com/raylib-extras/rlTextLib/refs/heads/main/demo.gif)
+
+# Todo / Ideas
+* Cache multiple sizes of glyph in the same atlas so it can be used at multiple sizes?
