@@ -302,8 +302,6 @@ rlTextLib
 
 #include "external/glad.h"              // required to get GL_MAX_TEXTURE_SIZE for atlas sizing, and for texture updates when adding glyphs at runtime
 
-//#include "external/stb_rect_pack.h"     // Required for: ttf/bdf font rectangles packaging
-
 #define STBTT_STATIC
 #define STB_TRUETYPE_IMPLEMENTATION
 #include "external/stb_truetype.h"      // Required for: ttf font data reading

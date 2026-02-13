@@ -43,7 +43,7 @@ void GameInit()
 	InitWindow(InitialWidth, InitialHeight, "Example");
 	SetTargetFPS(144);
 
-	// set up a glpyh set with the standard range and some extra characters
+	// set up a glyph set with the standard range and some extra characters
 	rltGlyphSet fontSet;
 	rltGetStandardGlyphSet(fontSet);
 	rltAddRangeToGlyphSet(255, 300, fontSet);
@@ -59,7 +59,7 @@ void GameInit()
 	rltAddGlpyhToFont(&ttfFont, GetCodepoint(u8"😊", &codePointSize), logo);
 	UnloadImage(logo);
 
-	// add custom color glpyh to the font
+	// add custom color glyph to the font
 	Image colorEmoji = LoadImage("resources/face-with-tears-of-joy_1f602.png");
 	ImageResize(&colorEmoji, int(fontSize), int(fontSize));
 	rltAddGlpyhToFont(&ttfFont, GetCodepoint(u8"😂", &codePointSize), colorEmoji);
