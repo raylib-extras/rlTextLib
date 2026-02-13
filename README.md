@@ -21,7 +21,8 @@ rlText is a **single header library for C++ **, it has no additional .cpp files 
 #define RL_TEXT_IMPLEMENTATION
 #include "rlText.h"
 ```
-The header does have some dependencies on files that ship with raylib, like raylib.h, glad.h, stb_rect_pack.h, andd stb_truetype.h
+The header does have some dependencies on files that ship with raylib, like raylib.h, external/glad.h, external/stb_rect_pack.h, and external/stb_truetype.h
+so make sure they are in your include paths.
 
 ## C
 rlText has a Pure C compatible API in `rlTextC.h` to your project and build the rlTextLibrary as a shared library and link it to your game. The dependencies on raylib headers are the same 
