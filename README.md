@@ -14,15 +14,25 @@
 * Add glyph ranges as needed
 * Atlas resizing
 
+# Limitations
+The library currently only supports truetype fonts, it does not support bitmap fonts.
+
 # Building
+
 ## C++
 rlText is a **single header library for C++ **, it has no additional .cpp files to build. just add `rlText.h` to your project and add `#define RL_TEXT_IMPLEMENTATION` before you include it in your cpp file:
 ```c
 #define RL_TEXT_IMPLEMENTATION
 #include "rlText.h"
 ```
-The header does have some dependencies on files that ship with raylib, like raylib.h, external/glad.h, external/stb_rect_pack.h, and external/stb_truetype.h
-so make sure they are in your include paths.
+The header does have some dependencies on files that ship with raylib, such as
+
+	* raylib.h					// for drawing
+	* raymath.h					// for maths
+	* external/glad.h			// to get the maxium texture size for atlas bounds
+	* external/stb_truetype.h	// to read the truetype data
+
+The code assumes that the raylib src dir will be in your include paths, and will use paths relative to that include dir.
 
 ## C
 rlText has a Pure C compatible API in `rlTextC.h` to your project and build the rlTextLibrary as a shared library and link it to your game. The dependencies on raylib headers are the same 
@@ -31,7 +41,7 @@ rlText has a Pure C compatible API in `rlTextC.h` to your project and build the 
 The APIs are documented in the header files for each API.
 
 # Examples
-The examples use Game-premake from
+The examples use Game-Premake from
 https://github.com/raylib-extras/game-premake/
 
 You can run the batch files on Windows or `premake5 gmake2` on other OSs to generate makefiles or Visual Studio proejcts for the examples, but it is not required to use the lib. The library and it's examples are also setup for use in VSCode, simply open the folder in VSCode and run the build task.
