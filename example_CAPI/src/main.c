@@ -3,7 +3,7 @@ Raylib example file.
 This is an example main file for a simple raylib project.
 Use this as a starting point or replace it with your code.
 
--- Copyright (c) 2020-2024 Jeffery Myers
+-- Copyright (c) 2020-2026 Jeffery Myers
 --
 --This software is provided "as-is", without any express or implied warranty. In no event
 --will the authors be held liable for any damages arising from the use of this software.

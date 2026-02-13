@@ -27,6 +27,9 @@ so make sure they are in your include paths.
 ## C
 rlText has a Pure C compatible API in `rlTextC.h` to your project and build the rlTextLibrary as a shared library and link it to your game. The dependencies on raylib headers are the same 
 
+# API Documentation
+The APIs are documented in the header files for each API.
+
 # Examples
 The examples use Game-premake from
 https://github.com/raylib-extras/game-premake/

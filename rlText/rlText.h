@@ -1,7 +1,7 @@
 /*
 rlTextLib
 
--- Copyright (c) 2025 Jeffery Myers
+-- Copyright (c) 2026 Jeffery Myers
 --
 --This software is provided "as-is", without any express or implied warranty. In no event
 --will the authors be held liable for any damages arising from the use of this software.
@@ -37,6 +37,7 @@ rlTextLib
 #include <vector>
 #include <string>
 
+// common codepoint ranges
 namespace rltCommonCodepointRanges
 {
 	static constexpr int HiraganaStart = 0x3040;
@@ -76,6 +77,9 @@ namespace rltCommonCodepointRanges
 	static constexpr int ArrowsEnd = 0x21FF;
 }
 
+/// <summary>
+/// Information about a single glyph in a font.
+/// </summary>
 struct rltGlyphInfo
 {
 	int         Value = 0;
@@ -87,12 +91,18 @@ struct rltGlyphInfo
 	std::unordered_map<int, float> KerningInfo;
 };
 
+/// <summary>
+/// Represents a contiguous range of glyphs in a font.
+/// </summary>
 struct rltGlyphRange
 {
 	size_t Start = 0;
 	std::vector<rltGlyphInfo> Glyphs;
 };
 
+/// <summary>
+/// Represents a loaded font and its glyphs.
+/// </summary>
 struct rltFont
 {
 	float BaseSize = 0;
@@ -109,30 +119,121 @@ struct rltFont
 	Vector2 NextGlyphOrigin = { 0,0 };
 };
 
+
+/// <summary>
+/// Gets a reference to the default built-in font. Will be lazy loaded as needed
+/// </summary>
+/// <returns>The default font.</returns>
 const rltFont& rltGetDefaultFont();
 
+/// <summary>
+/// Defines a unique set of glyphs to load, used to determine what characters from a cont to cache in the texture atlas
+/// </summary>
 using rltGlyphSet = std::set<int>;
 
+/// <summary>
+/// Fills a glyph set with the standard ASCII printable characters (32-127).
+/// </summary>
+/// <param name="glyphSet">The set to fill with standard glyphs.</param>
 void rltGetStandardGlyphSet(rltGlyphSet& glyphSet);
+
+/// <summary>
+/// Adds a range of codepoints to a glyph set.
+/// </summary>
+/// <param name="start">First codepoint in the range (inclusive).</param>
+/// <param name="end">Last codepoint in the range (inclusive).</param>
+/// <param name="glyphSet">The set to add codepoints to.</param>
 void rltAddRangeToGlyphSet(int start, int end, rltGlyphSet& glyphSet);
+
+/// <summary>
+/// Adds all unique codepoints found in a UTF-8 string to a glyph set.
+/// </summary>
+/// <param name="text">The UTF-8 encoded string to scan.</param>
+/// <param name="glyphSet">The set to add codepoints to.</param>
 void rltAddGlyphSetFromString(std::string_view text, rltGlyphSet& glyphSet);
 
+
+/// <summary>
+/// Loads a TTF font from a file.
+/// </summary>
+/// <param name="filePath">Path to the TTF file.</param>
+/// <param name="fontSize">Desired nominial font size in pixels.</param>
+/// <param name="glyphSet">Optional set of codepoints to include (nullptr for default set).</param>
+/// <param name="defaultSpacing">Optional pointer to override default spacing.</param>
+/// <returns>The loaded font.</returns>
 rltFont rltLoadFontTTF(std::string_view filePath, float fontSize, const rltGlyphSet* glyphSet = nullptr, float* defaultSpacing = nullptr);
+
+/// <summary>
+/// Loads a TTF font from memory.
+/// </summary>
+/// <param name="data">Pointer to TTF data in memory.</param>
+/// <param name="dataSize">Size of the TTF data in bytes.</param>
+/// <param name="fontSize">Desired font size in pixels.</param>
+/// <param name="glyphSet">Optional set of codepoints to include (nullptr for default set).</param>
+/// <param name="defaultSpacing">Optional pointer to override default spacing.</param>
+/// <returns>The loaded font.</returns>
 rltFont rltLoadFontTTFMemory(const void* data, size_t dataSize, float fontSize, const rltGlyphSet* glyphSet = nullptr, float* defaultSpacing = nullptr);
 
+/// <summary>
+/// Unloads a font and frees its texture atlas (call before CloseWindow).
+/// The font ranges will be cleared when the function returns
+/// </summary>
+/// <param name="font">Pointer to the font to unload.</param>
 void rltUnloadFont(rltFont* font);
 
-bool rltFontHasCodepoint(rltFont* font, int codepoint);
+/// <summary>
+/// Checks if a font contains glyphs for all codepoints in a string.
+/// </summary>
+/// <param name="font">Pointer to the font to check.</param>
+/// <param name="text">UTF-8 encoded string to check.</param>
+/// <returns>True if all codepoints are present, false otherwise.</returns>
 bool rltFontHasAllGlyphsInString(rltFont* font, std::string_view text);
 
+/// <summary>
+/// Adds a new glyph to a font from an image.
+/// Can be called at runtime
+/// Will cause the atlas to be updated so will block the GPU pipeline for that upload
+/// This can be used to add color logos or emojis to a font
+/// </summary>
+/// <param name="font">Pointer to the font.</param>
+/// <param name="codepoint">Unicode codepoint for the glyph.</param>
+/// <param name="glpyhImage">Image containing the glyph bitmap.</param>
+/// <param name="offeset">Offset to apply when rendering the glyph.</param>
+/// <param name="advance">Advance value for the glyph (use -1 for default).</param>
+/// <param name="sourceRect">Source rectangle in the image (use {0,0,0,0} for full image).</param>
+/// <returns>True if the glyph was added successfully, false otherwise.</returns>
 bool rltAddGlpyhToFont(rltFont* font, int codepoint, Image& glpyhImage, const Vector2& offeset = Vector2Zeros, float advance = -1, const Rectangle& sourceRect = Rectangle{ 0,0,0,0 });
 
+/// <summary>
+/// Merges glyphs from a source font into a destination font for the specified glyph set.
+/// Will copy the glyph images from the source font into the destination font. Can be used to build up a single 'mega font' 
+/// with glyphs from multiple source fonts, or to copy glyphs from a loaded font into the default font for easy use with drawing functions that take an optional font parameter
+/// </summary>
+/// <param name="destination">Font to add glyphs to.</param>
+/// <param name="source">Font to copy glyphs from.</param>
+/// <param name="glyphSet">Set of codepoints to merge.</param>
 void rltMergeGlypRange(rltFont* destination, const rltFont* source, rltGlyphSet& glyphSet);
 
+/// <summary>
+/// Draws text at the specified position using a font.
+/// </summary>
+/// <param name="text">UTF-8 encoded string to draw.</param>
+/// <param name="size">Font size in pixels.</param>
+/// <param name="position">Top-left position to draw the text.</param>
+/// <param name="tint">Color tint to apply.</param>
+/// <param name="font">Optional font to use (nullptr for default).</param>
 void rltDrawText(std::string_view text, float size, const Vector2& position, Color tint, const rltFont* font = nullptr);
 
+/// <summary>
+/// Sets whether text rendering should be vertically flipped.
+/// Useful when drawing to a render texture that will not be flipped, or in 3D spaces.
+/// </summary>
+/// <param name="flip">True to flip text vertically, false to render normally.</param>
 void rltSetTextYFlip(bool flip = true);
 
+/// <summary>
+/// Text alignment options for justified drawing.
+/// </summary>
 enum class rltAllignment
 {
 	Left,
@@ -140,18 +241,45 @@ enum class rltAllignment
 	Right,
 };
 
+/// <summary>
+/// Draws justified (aligned) text at the specified position.
+/// </summary>
+/// <param name="text">UTF-8 encoded string to draw.</param>
+/// <param name="size">Font size in pixels.</param>
+/// <param name="position">Reference position for alignment.</param>
+/// <param name="tint">Color tint to apply.</param>
+/// <param name="allignment">Text alignment (left, center, right).</param>
+/// <param name="font">Optional font to use (nullptr for default).</param>
 void rltDrawTextJustified(std::string_view text, float size, const Vector2& position, Color tint, rltAllignment allignment, const rltFont* font = nullptr);
 
+/// <summary>
+/// Draws text with automatic word wrapping to fit within a given width.
+/// </summary>
+/// <param name="text">UTF-8 encoded string to draw.</param>
+/// <param name="size">Font size in pixels.</param>
+/// <param name="position">Top-left position to draw the text.</param>
+/// <param name="width">Maximum width for wrapping.</param>
+/// <param name="tint">Color tint to apply.</param>
+/// <param name="font">Optional font to use (nullptr for default).</param>
+/// <returns>The final y position after drawing (useful for multi-line layouts).</returns>
 float rltDrawTextWrapped(std::string_view text, float size, const Vector2& position, float width, Color tint, const rltFont* font = nullptr);
 
+/// <summary>
+/// Measures the size (width and height) of the given text string.
+/// </summary>
+/// <param name="text">UTF-8 encoded string to measure.</param>
+/// <param name="size">Font size in pixels.</param>
+/// <param name="font">Optional font to use (nullptr for default).</param>
+/// <returns>Vector2 containing the width (x) and height (y) of the text.</returns>
 Vector2 rltMeasureText(std::string_view text, float size, const rltFont* font = nullptr);
 
 
+// implementation section
 #if defined(RL_TEXT_IMPLEMENTATION)
 /*
 rlTextLib
 
--- Copyright (c) 2025 Jeffery Myers
+-- Copyright (c) 2026 Jeffery Myers
 --
 --This software is provided "as-is", without any express or implied warranty. In no event
 --will the authors be held liable for any damages arising from the use of this software.
