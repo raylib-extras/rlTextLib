@@ -27,10 +27,10 @@ rlText is a **single header library for C++ **, it has no additional .cpp files 
 ```
 The header does have some dependencies on files that ship with raylib, such as
 
-	* raylib.h					// for drawing
-	* raymath.h					// for maths
-	* external/glad.h			// to get the maxium texture size for atlas bounds
-	* external/stb_truetype.h	// to read the truetype data
+* raylib.h					// for drawing
+* raymath.h					// for maths
+* external/glad.h			// to get the maxium texture size for atlas bounds
+* external/stb_truetype.h	// to read the truetype data
 
 The code assumes that the raylib src dir will be in your include paths, and will use paths relative to that include dir.
 
