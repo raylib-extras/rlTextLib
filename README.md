@@ -15,7 +15,9 @@
 * Atlas resizing
 
 # Limitations
-The library currently only supports truetype fonts, it does not support bitmap fonts.
+This library currently has some limitations
+* TTF only, bitmap fonts are not supported
+* Grayscale glyph rendering only
 
 # Building
 
@@ -47,11 +49,6 @@ https://github.com/raylib-extras/game-premake/
 You can run the batch files on Windows or `premake5 gmake2` on other OSs to generate makefiles or Visual Studio proejcts for the examples, but it is not required to use the lib. The library and it's examples are also setup for use in VSCode, simply open the folder in VSCode and run the build task.
 
 The example folder contains simple use cases of the library.
-
-# Limitations
-This library currently has some limitations
-* TTF only, bitmap fonts are not supported
-* Grayscale rendering only
 
 # C++ Use
 The library does use C++ but does not use any complex classes or templates. Only basic C++ features such as references and containers are used.
